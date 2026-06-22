@@ -1,22 +1,19 @@
 # 🎓 Estudia Anthropic
 
-Herramienta de estudio (Streamlit) para preparar las **certificaciones de Anthropic Academy**: dashboard de cursos, flashcards, tests y guías por curso, con enlace directo a cada curso oficial.
+Herramienta de estudio (Streamlit) para preparar las **certificaciones de Anthropic Academy**: organiza todos los cursos, te marca una ruta, te deja repasar con flashcards y tests, y te lleva al **curso oficial de cada certificación**.
 
 ## Qué incluye
-- 📊 Dashboard + ruta de estudio recomendada
-- 🃏 Flashcards por curso
-- ✅ Tests de repaso (rápido / simulacro)
-- 📚 Guías de estudio (resúmenes) en castellano
-- 🎓 Enlace al curso oficial para sacar cada certificado
+- 📊 Dashboard de todos los cursos + ruta de estudio recomendada
+- 🃏 Flashcards de repaso
+- ✅ Tests (modo rápido / simulacro)
+- 🎓 Enlace directo al curso oficial de cada certificación
 
 ## Cómo usar
-```
-pip install -r requirements.txt
-streamlit run anthropic_study_app.py
-```
-Abre http://localhost:8501
+    pip install -r requirements.txt
+    streamlit run anthropic_study_app.py
+    # abre http://localhost:8501
 
-## Nota
-Ayuda de estudio **no oficial**. Las certificaciones se obtienen en [Anthropic Academy](https://anthropic.skilljar.com/) — los enlaces oficiales están dentro de la app. No se redistribuye material crudo de los cursos.
+## Nota importante
+Ayuda de estudio **no oficial**. El contenido de las lecciones es de Anthropic y se estudia en su plataforma oficial — este repo **NO** lo redistribuye: te da el **mapa de cursos** y el **enlace oficial** de cada uno para que te certifiques en [Anthropic Academy](https://anthropic.skilljar.com/).
 
 — por David Álvarez · itopy.ai
