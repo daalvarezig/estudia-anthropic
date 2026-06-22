@@ -9,6 +9,8 @@ Herramienta de estudio (Streamlit) para preparar las **certificaciones de Anthro
 - 🎓 Enlace directo al curso oficial de cada certificación
 
 ## Cómo usar
+    python3 -m venv .venv
+    source .venv/bin/activate          # Windows: .venv\Scripts\activate
     pip install -r requirements.txt
     streamlit run anthropic_study_app.py
     # abre http://localhost:8501
