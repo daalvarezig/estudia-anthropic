@@ -4,10 +4,14 @@ Herramienta de estudio (Streamlit) para preparar las **certificaciones de Anthro
 
 ## Qué incluye
 - 📚 **19 guías de estudio originales** (una por certificación, en castellano)
-- 📊 Dashboard + ruta de estudio recomendada
 - 🃏 Flashcards por curso
 - ✅ Tests por curso (modo rápido / simulacro)
+- 📊 Dashboard + ruta de estudio recomendada
 - 🎓 Enlace directo al curso oficial para certificarte
+
+## Recursos extra (podcasts + presentaciones)
+Material complementario propio para profundizar — **podcasts** y **presentaciones**:
+👉 https://drive.google.com/drive/folders/1RlRy6ewy1aikhG21VnLNQvRVwZd-5lCM?usp=sharing
 
 ## Cómo usar
     git clone https://github.com/daalvarezig/estudia-anthropic.git
@@ -20,6 +24,6 @@ Herramienta de estudio (Streamlit) para preparar las **certificaciones de Anthro
 En **Windows**, activa con `.venv\Scripts\activate`. La app abre en http://localhost:8501
 
 ## Nota importante
-Las guías, flashcards y tests son **material original** de preparación (no oficial). El contenido de las lecciones es de Anthropic y se estudia en su plataforma oficial — este repo **NO** lo redistribuye: te da guías propias + el **enlace oficial** de cada curso para certificarte en [Anthropic Academy](https://anthropic.skilljar.com/).
+Las guías, flashcards, tests, podcasts y presentaciones son **material original** de preparación (no oficial). El contenido de las lecciones es de Anthropic y se estudia en su plataforma oficial — este repo te da material propio + el **enlace oficial** de cada curso para certificarte en [Anthropic Academy](https://anthropic.skilljar.com/).
 
 — por David Álvarez · itopy.ai
