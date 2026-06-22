@@ -1,862 +1,92 @@
-# Building with the Claude API
+## Resumen
 
-Fuente: https://anthropic.skilljar.com/claude-with-the-anthropic-api
+Esta guía prepara la certificación oficial de **Anthropic Academy: "Building with the Claude API"**. El examen verifica que sabes construir aplicaciones reales sobre la API de Claude: desde una simple llamada de clasificación hasta agentes que usan herramientas, mantienen conversaciones largas y controlan costes.
 
-## Para que sirve
+Está pensada para desarrolladores que ya programan (Python o TypeScript sobre todo) y quieren dominar la **Messages API** de Anthropic, los SDK oficiales, el uso de herramientas (tool use), el razonamiento extendido (thinking), el caché de prompts, las salidas estructuradas y las buenas prácticas de despliegue (streaming, manejo de errores, batches, conteo de tokens). No necesitas experiencia previa con LLMs, pero sí soltura leyendo JSON y haciendo peticiones HTTP.
 
-This comprehensive course covers the full spectrum of working with Anthropic models using the Claude API
+La idea clave que recorre todo el temario: **todo pasa por un único endpoint, `POST /v1/messages`**. Las herramientas, las salidas estructuradas, la visión, el thinking y el caché no son APIs separadas; son parámetros y bloques de contenido de esa misma petición. Si interiorizas eso, el resto encaja.
 
-## Cobertura del scrape
+## Conceptos clave
 
-- Lecciones visibles en pagina de curso: 85
-- Contenido extenso embebido: si
-- PDFs detectados: 0
-- Videos detectados en pagina principal: 8
-- Lecciones bloqueadas al abrir pagina individual: 85
+- **Messages API (`/v1/messages`)**: el corazón de todo. Envías una lista de `messages` (cada uno con `role` "user" o "assistant" y `content`) más `model` y `max_tokens`. Recibes un objeto con `content` (una lista de *bloques*), `stop_reason` y `usage`. **La API es sin estado (stateless)**: tú envías el historial completo en cada llamada; el servidor no recuerda conversaciones anteriores.
 
-## Secciones
+- **Modelos y familia Claude**: hay varios niveles. **Opus** es el más capaz (razonamiento y trabajo agéntico largo), **Sonnet** equilibra velocidad e inteligencia, **Haiku** es el más rápido y económico para tareas simples. Cada modelo tiene un ID exacto (p. ej. `claude-opus-4-8`, `claude-sonnet-4-6`, `claude-haiku-4-5`) que **no debes inventar ni adornar con sufijos de fecha**, o recibirás un 404. Cada uno tiene su ventana de contexto y su precio por millón de tokens (input y output se cobran por separado, el output más caro).
 
-### Getting started with Claude
+- **Bloques de contenido (content blocks)**: `content` es siempre una *lista* de bloques, no una cadena. Los tipos más comunes son `text`, `thinking`, `tool_use`, `tool_result`, `image` y `document`. Antes de leer `.text` debes comprobar `block.type`, porque el primer bloque puede ser de razonamiento o de uso de herramienta.
 
-Start here for the fundamentals. Covers API authentication, basic requests, conversation management, system prompts, and structured output generation.
+- **`stop_reason`**: indica por qué paró el modelo. Valores que debes conocer: `end_turn` (terminó solo), `max_tokens` (alcanzó el límite, output truncado), `tool_use` (quiere llamar a una herramienta, ejecútala y continúa), `stop_sequence`, `pause_turn` (flujos agénticos con herramientas de servidor) y `refusal` (rechazo por seguridad). Comprueba `stop_reason` antes de procesar la respuesta.
 
-### Prompt engineering & evaluation
+- **Tool use (uso de herramientas)**: defines herramientas con `name`, `description` y un `input_schema` en JSON Schema. Cuando Claude decide usar una, devuelve un bloque `tool_use` y `stop_reason: "tool_use"`. Tú ejecutas la función, devuelves un bloque `tool_result` (con el mismo `tool_use_id`) en un mensaje `user`, y repites el bucle hasta `end_turn`. Hay dos modos: el **tool runner** del SDK (automático, recomendado) y el **bucle manual** (control fino: aprobación humana, logging, ejecución condicional). `tool_choice` controla si el uso es `auto`, `any`, una herramienta concreta o `none`.
 
-Learn to write prompts that actually work. Focuses on prompting strategies, evaluation frameworks, and systematic testing approaches.
+- **Herramientas del lado del cliente vs. del servidor**: las *cliente* (bash, editor de texto, memoria) las define Anthropic pero las ejecuta tu código. Las *servidor* (code execution, web search, web fetch) corren en la infraestructura de Anthropic; solo las declaras y Claude las usa sola.
 
-### Tool use with Claude
+- **Thinking / razonamiento extendido**: en los modelos actuales se usa **thinking adaptativo** (`thinking: {type: "adaptive"}`): Claude decide cuánto razonar. El antiguo `budget_tokens` (presupuesto fijo) está obsoleto en los modelos nuevos. La profundidad se controla con el parámetro **effort** (`output_config: {effort: "low" | "medium" | "high" | "max"}`).
 
-Extend Claude with custom tools and functions. Build apps with function calling, multi-turn tool interactions, batch tool calling, and leverage built-in utilities.
+- **Salidas estructuradas (structured outputs)**: para garantizar JSON válido conforme a un esquema usas `output_config: {format: {type: "json_schema", schema: {...}}}`, o el helper `messages.parse()` que valida automáticamente contra un modelo Pydantic/Zod. También existe `strict: true` en herramientas para validar sus parámetros. El antiguo parámetro `output_format` está obsoleto.
 
-### Retrieval augmented generation
+- **Streaming**: para respuestas largas o `max_tokens` alto debes usar streaming (`messages.stream()`), porque las peticiones no-streaming largas pueden agotar el timeout HTTP. El helper `get_final_message()` / `finalMessage()` te da la respuesta completa aunque hayas ido recibiendo eventos.
 
-Implementation guide for production RAG systems. Covers text chunking, embeddings, hybrid search with BM25, multi-index architectures, reranking, and contextual retrieval.
+- **Caché de prompts (prompt caching)**: reutiliza prefijos grandes y estables para abaratar hasta ~90%. Es un **emparejamiento por prefijo**: cualquier byte que cambie antes de un punto de caché (`cache_control: {type: "ephemeral"}`) invalida todo lo posterior. Se verifica con `usage.cache_read_input_tokens`.
 
-### Model Context Protocol (MCP)
+- **Endpoints de apoyo**: **Batches** (procesamiento asíncrono al 50% del precio, hasta 24h), **Files** (subir archivos una vez y referenciarlos por `file_id`), **Token Counting** (`count_tokens`, usa el tokenizador real de Claude, nunca `tiktoken`) y **Models** (descubrir capacidades y ventanas de contexto en vivo).
 
-The protocol for building modular AI applications. Define custom tools and resources, implement MCP servers and clients, handle the full integration lifecycle.
+- **Visión y documentos**: puedes enviar imágenes (base64 o URL) y PDFs como bloques de contenido en el mensaje del usuario.
 
-### Claude Code & Computer Use
+- **Manejo de errores y reintentos**: usa las clases de excepción tipadas del SDK (`RateLimitError`, `BadRequestError`, etc.), no compares cadenas de texto. El SDK reintenta automáticamente 429 y 5xx con backoff exponencial.
 
-Two powerful Anthropic tools in action. Claude Code accelerates development workflows, Computer Use automates UI interactions. Includes MCP integration patterns.
+## Que necesitas dominar para el certificado
 
-### Agents and workflows
+- Construir una petición básica a `messages.create()` con `model`, `max_tokens` y `messages`, y recorrer correctamente `content` comprobando `block.type`.
+- Entender que la API es **sin estado** y reenviar el historial completo en conversaciones multi-turno; saber que el primer mensaje debe ser `user`.
+- Implementar el **bucle de tool use** completo: definir la herramienta, detectar `stop_reason: "tool_use"`, ejecutar, devolver `tool_result` con el `tool_use_id` correcto, y repetir. Saber cuándo usar el tool runner frente al bucle manual.
+- Distinguir herramientas de **cliente** (las ejecutas tú) de las de **servidor** (las ejecuta Anthropic).
+- Configurar **thinking adaptativo** y el parámetro **effort**; saber que `budget_tokens` está obsoleto en los modelos actuales.
+- Forzar **salidas estructuradas** con `output_config.format` o `messages.parse()`, y conocer las limitaciones del JSON Schema soportado.
+- Usar **streaming** y saber por qué es obligatorio con `max_tokens` alto.
+- Diseñar **caché de prompts** correctamente: contenido estable primero, volátil al final; reconocer "invalidadores silenciosos" (un `datetime.now()` o un UUID en el system prompt arruinan el caché).
+- Interpretar el objeto **`usage`**: `input_tokens`, `output_tokens`, `cache_creation_input_tokens`, `cache_read_input_tokens`.
+- Manejar todos los **`stop_reason`**, especialmente `refusal`, `max_tokens` y `tool_use`.
+- Elegir el **modelo adecuado** por coste/capacidad y usar el ID exacto.
+- Conocer los **endpoints de apoyo**: Batches (50% más barato, asíncrono), Files (`file_id`), y Token Counting (`count_tokens`, no `tiktoken`).
+- Aplicar **manejo de errores** con excepciones tipadas y entender el reintento automático del SDK.
 
-Architecture patterns for autonomous AI systems. Understand parallel execution, operation chaining, conditional routing, and effective debugging strategies.
+## Plan de estudio
 
-## Resumen de estudio
+1. **Monta el entorno (1 día).** Instala el SDK oficial (`pip install anthropic` o `npm install @anthropic-ai/sdk`), pon tu clave en `ANTHROPIC_API_KEY` (variable de entorno, **nunca** hardcodeada) y haz tu primera llamada a `messages.create()`. Imprime y examina el objeto de respuesta entero: `content`, `stop_reason`, `usage`.
+2. **Domina la petición básica (1-2 días).** Practica system prompts, conversaciones multi-turno (reenviando el historial), visión con una imagen y conteo de tokens con `count_tokens()`. Interioriza que `content` es una lista de bloques.
+3. **Tool use a fondo (2-3 días).** Implementa primero el **bucle manual** para entender cada paso (es lo que más cae en el examen), y luego prueba el **tool runner**. Asegúrate de devolver siempre el `tool_use_id` correcto. Prueba `tool_choice` y el manejo de errores en `tool_result` (`is_error: true`).
+4. **Thinking, effort y salidas estructuradas (1-2 días).** Activa thinking adaptativo, juega con `effort`, y fuerza JSON con `output_config.format` y con `messages.parse()`.
+5. **Producción: streaming, caché, errores (2 días).** Implementa streaming con `get_final_message()`, diseña un prompt cacheado y verifica el hit con `cache_read_input_tokens`, y captura excepciones tipadas.
+6. **Endpoints de apoyo (1 día).** Crea un batch y recupera resultados; sube un archivo con Files y referéncialo por `file_id`.
+7. **Repaso activo.** Estudia las flashcards, haz el quiz, y vuelve a cualquier concepto que falles. Relee la tabla de `stop_reason` y la de elección de modelo hasta tenerlas memorizadas.
 
-### Overview of Claude Models
+## Errores comunes y tips
 
-- Claude has three model families optimized for different priorities:
-- Opus = highest intelligence model for complex, multi-step tasks requiring deep reasoning and planning. Trade-off: higher cost and latency.
-- Sonnet = balanced model with good intelligence, speed, and cost efficiency. Strong coding abilities and precise code editing. Best for most practical use cases.
-- Haiku = fastest model optimized for speed and cost efficiency. No reasoning capabilities like Opus/Sonnet. Best for real-time user interactions and high-volume processing.
-- Selection framework: Intelligence priority → Opus. Speed priority → Haiku. Balanced requirements → Sonnet.
-- Common approach = use multiple models in same application based on specific task requirements rather than single model selection.
-- All models share core capabilities: text generation, coding, image analysis. Main difference is optimization focus.
+- **Acceder a `response.content[0].text` directamente.** Falla si el primer bloque es `thinking`, `tool_use` o un rechazo. **Comprueba siempre `block.type`** y recorre la lista.
+- **Inventar el ID del modelo o añadirle sufijos de fecha.** Usa el ID exacto (alias) de la documentación; lo contrario da 404.
+- **Olvidar reenviar el historial.** La API es sin estado: si no incluyes los mensajes previos, Claude "olvida" la conversación.
+- **Romper el bucle de herramientas.** Cada `tool_result` debe llevar el `tool_use_id` exacto del `tool_use` correspondiente, e ir en un mensaje con `role: "user"`. Si falta un resultado para algún `tool_use`, la petición da error.
+- **No comprobar `stop_reason`.** Si es `max_tokens`, tu salida está cortada (sube `max_tokens` o usa streaming). Si es `refusal`, no reintentes con el mismo prompt.
+- **Usar `tiktoken` para contar tokens.** Es de OpenAI y subestima los tokens de Claude. Usa `count_tokens()`, que es específico del modelo.
+- **Caché que nunca acierta.** Un `datetime.now()`, un UUID o un `json.dumps()` sin `sort_keys=True` al principio del prompt invalidan todo el prefijo. Pon lo estable primero y lo volátil al final; verifica con `usage.cache_read_input_tokens`.
+- **No usar streaming con `max_tokens` alto.** Las peticiones largas no-streaming agotan el timeout HTTP del SDK. Usa `messages.stream()` y `get_final_message()`.
+- **Hacer string-matching sobre el JSON de `input` de las herramientas.** Parsea siempre con `json.loads()` / `JSON.parse()`; el escapado puede variar.
+- **Reinventar lo que el SDK ya ofrece.** Usa los tipos del SDK, las excepciones tipadas y `messages.parse()` / `finalMessage()` en lugar de construirlo a mano.
+- **Tip de coste:** Batches da 50% de descuento para trabajo no urgente; el caché de prompts abarata el contexto repetido; elige Haiku/Sonnet para volumen y Opus para tareas difíciles.
+- **Tip de diseño:** empieza por lo más simple (una llamada). Solo escala a workflow (varias llamadas orquestadas por tu código) o a agente (Claude decide su trayectoria) cuando la tarea lo justifique de verdad.
 
-### Accessing the API
+## Puntos clave para recordar
 
-- API Access Flow = 5-step process from user input to response display
-- Step 1: Client sends user text to developer's server (never access Anthropic API directly from client apps to keep API key secret)
-- Step 2: Server makes request to Anthropic API using SDK (Python, TypeScript, JavaScript, Go, Ruby) or plain HTTP. Required parameters = API key + model name + messages list + max_tokens limit
-- Step 3: Text generation process has 4 stages:
-- Tokenization = breaking input into tokens (words/word parts/symbols/spaces)
-- Embedding = converting tokens to number lists representing all possible word meanings
-- Contextualization = adjusting embeddings based on neighboring tokens to determine precise meaning
-- Generation = output layer produces probabilities for next word, model selects using probability + randomness, adds selected word, repeats process
-
-### Making a Request
-
-- Making API Request to Anthropic = Process involving 4 setup steps and understanding message structure
-- Setup Steps:
-- 1. Install packages = pip install anthropic python-dotenv in Jupyter notebook
-- 2. Store API key = Create .env file with ANTHROPIC_API_KEY="your_key" (ignore in version control)
-- 3. Load environment variable = Use python-dotenv to securely load API key
-- 4. Create client = Initialize anthropic client and define model variable (claude-3-sonnet)
-- API Request Structure:
-- Function = client.messages.create()
-
-### Multi-Turn Conversations
-
-- Multi-Turn Conversations = conversations with multiple back-and-forth exchanges that maintain context.
-- Key limitation: Anthropic API stores no messages. Each request is independent with no memory of previous exchanges.
-- Solution requires two steps:
-- 1. Manually maintain message list in code
-- 2. Send entire conversation history with every follow-up request
-- Message structure = list of dictionaries with "role" (user/assistant) and "content" fields.
-- Conversation flow:
-- Send initial user message
-
-### System Prompts
-
-- System Prompts = technique to customize Claude's response style and tone by assigning it a specific role or behavior pattern.
-- Implementation = pass system prompt as plain string to create function using system keyword argument.
-- Purpose = control how Claude responds rather than what it responds. Example: math tutor role makes Claude give hints instead of direct answers.
-- Structure = first line typically assigns role ("You are a patient math tutor"), followed by specific behavioral instructions.
-- Key principle = system prompts guide response approach, not content. Same question gets different treatment based on assigned role.
-- Technical implementation = create params dictionary, conditionally add system key if prompt provided, pass params to create function with ** unpacking. Handle None case by excluding system parameter entirely.
-- Use case example = Math tutor that gives guidance/hints rather than complete solutions, encouraging student thinking over direct answers.
-
-### Temperature
-
-- Temperature = parameter (0-1) that controls randomness in Claude's text generation by influencing token selection probabilities.
-- Text generation process: Input text → tokenization → probability assignment to possible next tokens → token selection based on probabilities → repeat.
-- Temperature effects:
-- Temperature 0 = deterministic output, always selects highest probability token
-- Higher temperature = increases chance of selecting lower probability tokens, more creative/unexpected outputs
-- Usage guidelines:
-- Low temperature (near 0) = data extraction, factual tasks requiring consistency
-- High temperature (near 1) = creative tasks like brainstorming, writing, jokes, marketing
-
-### Response Streaming
-
-- Response Streaming = technique to display AI responses chunk-by-chunk as they're generated instead of waiting for complete response.
-- Problem solved: AI responses can take 10-30 seconds. Users expect immediate feedback, not just spinners.
-- How it works:
-- 1. Server sends user message to Claude
-- 2. Claude immediately sends initial response (no text, just acknowledgment)
-- 3. Stream of events follows, each containing text chunks
-- 4. Server forwards chunks to frontend for real-time display
-- Event types:
-
-### Controlling Model Output
-
-- **Controlling Model Output = Two key techniques beyond prompt modification**
-- **Pre-filling Assistant Messages = Manually adding assistant message at end of conversation to steer response direction**
-- How it works:
-- Assemble messages list with user prompt + manual assistant message
-- Claude sees assistant message as already authored content
-- Claude continues response from exact end of pre-filled text
-- Response gets steered toward pre-filled direction
-- Key point: Claude continues from exact endpoint of pre-fill, not complete sentences. Must stitch together pre-fill + generated response.
-
-### Structured Data
-
-- Structured Data Generation = technique using assistant message prefilling + stop sequences to get raw output without Claude's natural explanatory headers/footers.
-- Problem = Claude automatically adds markdown formatting, headers, commentary when generating JSON/code/structured content. Users often want just the raw data for copy/paste functionality.
-- Solution Pattern:
-- 1. User message = request for structured data
-- 2. Assistant message prefill = opening delimiter (e.g., "\`\`\`json")
-- 3. Stop sequence = closing delimiter (e.g., "\`\`\`")
-- How it works = Claude sees prefilled message, assumes it already started response, generates only the requested content, stops when hitting delimiter.
-- Result = Raw structured data output with no extra formatting or commentary.
-
-### Prompt Evaluation
-
-- Prompt Engineering = techniques for writing/editing prompts to help Claude understand requests and desired responses.
-- Prompt Evaluation = automated testing of prompts using objective metrics to measure effectiveness.
-- Three paths after writing a prompt:
-- 1. Test once/twice, deploy to production (trap)
-- 2. Test with custom inputs, minor tweaks for corner cases (trap)
-- 3. Run through evaluation pipeline for objective scoring (recommended)
-- Key takeaway: Engineers commonly under-test prompts. Use evaluation pipelines to get objective performance scores before iterating and deploying prompts.
-
-### A Typical Eval Workflow
-
-- Typical Eval Workflow = 6-step iterative process for prompt improvement
-- Step 1: Write initial prompt draft - create baseline prompt to optimize
-- Step 2: Create evaluation dataset - collection of test inputs (can be 3 examples or thousands, hand-written or LLM-generated)
-- Step 3: Generate prompt variations - interpolate each dataset input into prompt template
-- Step 4: Get LLM responses - feed each prompt variation to Claude, collect outputs
-- Step 5: Grade responses - use grader system to score each response (e.g. 1-10 scale), average scores for overall prompt performance
-- Step 6: Iterate - modify prompt based on scores, repeat entire process, compare versions
-- Key points: No standard methodology exists. Many open-source/paid tools available. Can start simple with custom implementation. Grading complexity varies. Objective scoring enables systematic prompt improvement through A/B comparison.
-
-### Generating Test Datasets
-
-- Custom prompt evaluation workflow = build prompt + generate test dataset + evaluate performance
-- Goal = AWS code assistance prompt that outputs only Python, JSON config, or regex without explanations
-- Dataset generation approaches = manual assembly or automated with Claude (use faster models like Haiku for generation)
-- Dataset structure = array of JSON objects with task property describing user requests
-- Generation process = prompt Claude to create test cases → use pre-filling with assistant message "\`\`\`json" → set stop sequence "\`\`\`" → parse response as JSON → save to file
-- Key implementation = generate_dataset() function that sends prompt to Claude, gets structured JSON response of test tasks, saves to dataset.json file for later evaluation use
-- Test dataset enables systematic evaluation by running prompt against multiple input scenarios to measure performance consistency.
-
-### Running the Eval
-
-- Eval execution process = merging test cases with prompts, running through LLM, and grading outputs.
-- Test case = individual record from dataset (JSON object).
-- Three core functions:
-- run_prompt = merges test case with prompt, sends to Claude, returns output
-- run_test_case = calls run_prompt, grades result, returns summary dictionary
-- run_eval = loops through dataset, calls run_test_case for each, assembles results
-- Basic prompt structure = "Please solve the following task: [test_case_task]" (v1 starting point).
-- Current limitations = no output formatting instructions, hardcoded scoring (score=10), verbose Claude responses.
-
-### Model Based Grading
-
-- Model Based Grading = evaluation system that takes model outputs and assigns objective scores (typically 1-10 scale, 10 = highest quality)
-- Three grader types:
-- Code graders = programmatic checks (length, word presence, syntax validation, readability scores)
-- Model graders = additional API call to evaluate original model output, highly flexible for quality/instruction-following assessment
-- Human graders = person evaluates responses, most flexible but time-consuming and tedious
-- Key requirements: Must return objective signal (usually numerical score). Define evaluation criteria upfront.
-- Implementation pattern for model graders:
-- Create detailed prompt requesting strengths/weaknesses/reasoning/score (not just score alone to avoid default middling scores)
-
-### Code Based Grading
-
-- Code Based Grading = automated validation system for LLM outputs containing code, JSON, or regex
-- Core Implementation:
-- validate_json() = attempts JSON parsing, returns 10 if valid, 0 if error
-- validate_python() = attempts AST parsing, returns 10 if valid, 0 if error
-- validate_regex() = attempts regex compilation, returns 10 if valid, 0 if error
-- Dataset Requirements:
-- Must include "format" key specifying expected output type (JSON/Python/RegEx)
-- Updated via prompt template modification for automated dataset generation
-
-### Prompt Engineering
-
-- Prompt Engineering = improving prompts to get more reliable, higher-quality outputs from language models.
-- Module Structure: Start with initial poor prompt → Apply prompt engineering techniques step-by-step → Evaluate improvements after each technique → Observe performance gains over time.
-- Example Goal: Generate one-day meal plan for athletes based on height, weight, physical goal, dietary restrictions.
-- Technical Setup:
-- Updated eval pipeline with flexible prompt evaluator class
-- Supports concurrency (adjust max_concurrent_tasks based on rate limits)
-- generate_dataset() method creates test cases with specified inputs
-- run_prompt() function processes each test case individually
-
-### Being Clear and Direct
-
-- Being Clear and Direct = Use simple, direct language with action verbs in the first line of prompts to specify the exact task.
-- First line importance = Most critical part of prompt that sets the foundation for AI response.
-- Structure = Action verb + clear task description + output specifications.
-- Examples:
-- "Write three paragraphs about how solar panels work"
-- "Identify three countries that use geothermal energy and for each include generation stats"
-- "Generate a one day meal plan for an athlete that meets their dietary restrictions"
-- Key components = Action verb at start + direct task statement + expected output details.
-
-### Being Specific
-
-- Being Specific = adding guidelines or steps to direct model output in particular direction
-- Two types of guidelines:
-- Type A (Attributes) = list qualities/attributes desired in output (length, structure, format)
-- Type B (Steps) = provide specific steps for model to follow in reasoning process
-- Type A controls output characteristics. Type B controls how model arrives at answer.
-- Both techniques often combined in professional prompts.
-- When to use:
-- Type A (attributes): recommended for almost all prompts
-
-### Structure with XML Tags
-
-- XML Tags for Prompt Structure = Using XML tags to organize and delineate different content sections within prompts to improve AI comprehension.
-- Purpose = When interpolating large amounts of content into prompts, XML tags help AI models distinguish between different types of information and understand text grouping.
-- Implementation = Wrap content sections in descriptive XML tags like    or    rather than dumping unstructured text.
-- Tag naming = Use descriptive, specific tag names (e.g., "sales_records" better than "data") to provide context about content nature.
-- Example use case = Debugging prompt with mixed code and documentation becomes clearer when separated into   and   tags.
-- Benefits = Makes prompt structure obvious to AI, reduces confusion about content boundaries, improves output quality even for smaller content blocks.
-- Application = Can wrap any interpolated content like   even when content is short, to clarify it's external input requiring consideration.
-
-### Providing Examples
-
-- One-shot/Multi-shot prompting = providing examples in prompts to guide model behavior. One-shot = single example, multi-shot = multiple examples.
-- Implementation: Structure examples with XML tags containing sample input and ideal output. Always wrap examples clearly to distinguish from actual prompt content.
-- Key applications:
-- Corner case handling (sarcasm detection, edge scenarios)
-- Complex output formatting (JSON structures, specific formats)
-- Clarifying expected response quality/style
-- Best practices:
-- Add context for corner cases ("be especially careful with sarcasm")
-
-### Introducing Tool Use
-
-- Tool use = method for Claude to access external information beyond training data.
-- Default limitation: Claude only knows information from training data, lacks current/real-time information.
-- Tool use flow:
-- 1. Send initial request to Claude + instructions for external data access
-- 2. Claude evaluates if external data needed, requests specific information
-- 3. Server runs code to fetch requested data from external sources
-- 4. Send follow-up request to Claude with retrieved data
-- 5. Claude generates final response using original prompt + external data
-
-### Project Overview
-
-- **Project Overview**
-- Goal = Teach Claude to set time-based reminders through tool implementation in Jupyter notebook
-- Target interaction = User: "Set reminder for doctor's appointment, week from Thursday" → Claude: "I will remind you at that point in time"
-- **Three core problems requiring tools:**
-- 1. Time knowledge gap = Claude knows current date but not exact time
-- 2. Time calculation errors = Claude sometimes miscalculates time-based addition (e.g., 379 days from January 13th, 1973)
-- 3. No reminder mechanism = Claude understands reminder concept but lacks implementation capability
-- **Three corresponding tools to build:**
-
-### Tool Functions
-
-- Tool Functions = Python functions executed automatically when Claude needs extra information to help users.
-- Key characteristics:
-- Plain Python functions called by Claude when it determines additional data is needed
-- Must use descriptive function names and argument names
-- Should validate inputs and raise errors with meaningful messages
-- Error messages are visible to Claude, allowing it to retry with corrected parameters
-- Best practices:
-- 1. Well-named functions and arguments
-
-### Tool Schemas
-
-- Tool Schemas = JSON schema specifications that describe tool functions and their parameters for language models
-- JSON Schema = data validation specification (not ML-specific) used to validate JSON data, adopted by ML community for tool calling
-- Tool Schema Structure:
-- name: tool identifier
-- description: 3-4 sentences explaining what tool does, when to use, what data it returns
-- input_schema: actual JSON schema describing function arguments with types and descriptions
-- Schema Generation Trick:
-- 1. Take tool function to Claude.ai
-
-### Handling Message Blocks
-
-- **Tool-Enabled Claude Requests**
-- Step 3: Making requests to Claude with tools = include tool schema in request alongside user message using \`tools\` keyword argument containing JSON schema specs.
-- **Multi-Block Messages**
-- Content structure change = messages now contain multiple blocks instead of just text blocks.
-- Tool response format = assistant message with:
-- Text block = user-facing explanation
-- Tool use block = contains function name + arguments for tool execution
-- **Message History Management**
-
-### Sending Tool Results
-
-- Tool Results = Results from executed tool functions sent back to Claude in follow-up requests.
-- Process: Execute tool function requested by Claude → Create tool result block → Send follow-up request with full conversation history.
-- Tool Result Block Structure:
-- tool_use_id = Matches ID from original tool use block to pair requests with results
-- content = Tool function output converted to string (usually JSON)
-- is_error = Boolean flag for function execution errors (default false)
-- Tool Use ID Purpose = Links multiple tool requests to correct results when Claude makes simultaneous tool calls. Each tool use gets unique ID, tool results must reference matching IDs.
-- Follow-up Request Requirements:
-
-### Multi-Turn Conversations with Tools
-
-- Multi-Turn Tool Conversations = conversations where Claude uses multiple tools sequentially to answer a single user query.
-- Tool Chaining Process = user asks question → Claude requests first tool → tool executed → result returned → Claude requests second tool → tool executed → result returned → Claude provides final answer.
-- Example Flow = user asks "what day is 103 days from today" → Claude calls get_current_datetime → Claude calls add_duration_to_datetime → Claude provides answer.
-- Implementation Pattern = while loop that continues calling Claude until no more tool requests, checking each response for tool_use blocks.
-- run_conversation Function = takes initial messages, loops through Claude calls, executes requested tools, adds results to conversation, continues until final response.
-- Required Refactors:
-- add_user_message/add_assistant_message = updated to handle multiple message blocks instead of just plain text
-- chat function = accepts tools parameter, returns entire message instead of just first text block
-
-### Implementing Multiple Turns
-
-- **Multiple Turns Implementation = continuously calling Claude until it stops requesting tools**
-- **Stop Reason Field = indicates why Claude stopped generating text**
-- stop_reason = "tool_use" means Claude wants to call a tool
-- Other values exist but tool_use is most commonly checked
-- **run_conversation Function = main loop that:**
-- 1. Calls Claude with messages + available tools
-- 2. Adds assistant response to conversation history
-- 3. Checks stop_reason - if not "tool_use", breaks loop
-
-### Using Multiple Tools
-
-- Multiple Tools Implementation = Adding additional tools to an existing tool system after initial framework setup.
-- Process = 3 steps: (1) Add tool schemas to RunConversation function's tools list, (2) Add conditional cases in RunTool function to handle new tool names, (3) Implement actual tool functions.
-- Key Components:
-- RunConversation function = Contains tools list that makes Claude aware of available tools
-- RunTool function = Routes tool calls to appropriate functions based on tool name
-- Tool schemas = Define tool structure for the AI model
-- Tool functions = Actual implementation code
-- Example Tools Added:
-
-### The Batch Tool
-
-- Batch Tool = tool that enables Claude to run multiple tools in parallel within a single Assistant message instead of making separate sequential requests.
-- Problem: Claude can technically send multiple tool use blocks in one message but rarely does so in practice, leading to unnecessary sequential tool calls.
-- Solution: Create batch tool schema that takes list of invocations (each containing tool name + arguments). Instead of calling tools directly, Claude calls batch tool with array of desired tool executions.
-- Implementation:
-- Add batch tool to schema with invocations parameter
-- Create run_batch function that iterates through invocations list
-- Extract tool name and JSON-parsed arguments from each invocation
-- Call run_tool function for each requested tool
-
-### Tools for Structured Data
-
-- Tools for Structured Data = alternative method to extract structured JSON from data sources using Claude's tool system instead of message pre-fill and stop sequences.
-- Key differences from prompt-based extraction:
-- More reliable output
-- More complex setup
-- Requires JSON schema specification
-- Core Process:
-- 1. Define JSON schema for tool where inputs = desired data structure
-- 2. Send prompt + schema to Claude
-
-### The Text Edit Tool
-
-- Text Editor Tool = built-in Claude tool for file/text operations (read, write, create, replace, undo files/directories)
-- Key characteristics:
-- Only JSON schema built into Claude, implementation must be custom-coded
-- Schema stub sent to Claude gets auto-expanded to full schema
-- Schema type string varies by Claude model version (3.5 vs 3.7 have different dates)
-- Enables Claude to act as software engineer out-of-the-box
-- Required implementation:
-- Custom class/functions to handle Claude's tool use requests
-
-### The Web Search Tool
-
-- Web Search Tool = built-in Claude tool for searching web to find up-to-date/specialized information for user questions
-- Implementation = no custom code needed, Claude handles search execution automatically
-- Schema Requirements:
-- type: "web_search_20250305"
-- name: "web_search"
-- max_uses: number (limits total searches, default 5)
-- allowed_domains: optional list to restrict search to specific domains
-- Response Structure:
-
-### Introducing Retrieval Augmented Generation
-
-- RAG = Retrieval Augmented Generation technique for querying large documents using language models.
-- Problem: How to extract specific information from large documents (100-1000+ pages) using Claude without hitting context limits.
-- Option 1 (Direct approach): Place entire document text directly into prompt.
-- Limitations: Hard token limits, decreased effectiveness with longer prompts, higher costs, slower processing
-- Option 2 (RAG approach): Two-step process
-- Step 1: Break document into small chunks
-- Step 2: For user questions, find most relevant chunks and include only those in prompt
-- RAG benefits: Model focuses on relevant content, scales to large/multiple documents, smaller prompts, lower costs, faster processing
-
-### Text Chunking Strategies
-
-- Text Chunking Strategies = process of dividing documents into smaller pieces for RAG pipelines
-- Core Problem: Chunking quality directly impacts RAG performance. Poor chunking leads to irrelevant context retrieval (e.g., medical "bug" text retrieved for software engineering query about bugs).
-- Three Main Strategies:
-- 1. Size-Based Chunking = dividing text into equal-length strings
-- Pros: Easy to implement, most common in production
-- Cons: Cut-off words, lacks context
-- Solution: Overlap strategy = include characters from neighboring chunks to preserve context
-- Trade-off: Creates text duplication but improves chunk meaning
-
-### Text Embeddings
-
-- Text Embeddings = numerical representation of text meaning generated by embedding models
-- Embedding Model = takes text input, outputs long list of numbers (range -1 to +1)
-- Embedding Numbers = scores representing unknown qualities/features of input text. Each number theoretically scores different aspects (happiness, topic relevance, etc.) but actual meaning is unknown to users.
-- Semantic Search = uses text embeddings to find text chunks related to user questions in RAG pipelines. Solves the search problem of matching user queries to relevant document chunks.
-- RAG Pipeline Process = extract text chunks → user submits query → find related chunks using semantic search → add relevant chunks as context to prompt
-- Implementation = Anthropic recommends Voyage AI for embedding generation. Requires separate account/API key. Free to start, easy integration via SDK.
-- Key Insight = Embeddings enable semantic similarity matching rather than keyword matching, allowing better understanding of text relationships for retrieval tasks.
-
-### The Full RAG Flow
-
-- RAG Flow = 7-step process combining text chunking, embeddings, and vector search to retrieve relevant context for LLM queries.
-- Step 1: Text Chunking = Split source documents into separate text pieces
-- Step 2: Generate Embeddings = Convert text chunks into numerical vectors using embedding models
-- Step 3: Normalization = Scale vector magnitudes to 1.0 (handled automatically by embedding APIs)
-- Step 4: Vector Database Storage = Store embeddings in specialized database optimized for numerical vector operations
-- Step 5: Query Processing = Convert user question into embedding using same model
-- Step 6: Similarity Search = Find most similar stored embeddings using cosine similarity calculation
-- Step 7: Prompt Assembly = Combine user question with retrieved relevant text chunks, send to LLM
-
-### Implementing the Rag Flow
-
-- RAG Flow Implementation = practical walkthrough of 5-step retrieval-augmented generation process
-- Step 1: Text Chunking = split document into sections using chunk_by_section function on report.MD file
-- Step 2: Embedding Generation = create vector representations for each chunk using generate_embedding function (supports single string or list of strings input)
-- Step 3: Vector Store Population = create vector index instance, loop through chunk-embedding pairs using zip(), store each pair with store.add_vector(embedding, {content: chunk}). Store original text with embeddings for meaningful retrieval results.
-- Step 4: Query Processing = user asks question "what did software engineering department do last year", generate embedding for user query
-- Step 5: Similarity Search = use store.search(user_embedding, 2) to find 2 most relevant chunks, returns results with cosine distances (0.71 for section two, 0.72 for methodology section)
-- Key Components:
-- Vector Index Class = custom vector database implementation
-
-### BM25 Lexical Search
-
-- BM25 = Best Match 25, a lexical search algorithm commonly used in RAG pipelines to complement semantic search.
-- Problem with semantic search alone = Can miss exact term matches, returning irrelevant results even when specific terms appear frequently in certain documents.
-- Hybrid search approach = Combines semantic search (embeddings/vector database) with lexical search (BM25) in parallel, then merges results for better balance.
-- BM25 algorithm steps:
-- 1. Tokenize user query into separate terms (remove punctuation, split on spaces)
-- 2. Count frequency of each term across all text chunks/documents
-- 3. Assign relative importance to terms based on usage frequency (rare terms = higher importance, common terms like "a" = lower importance)
-- 4. Rank text chunks by how often they contain higher-weighted terms
-
-### A Multi-Index Rag Pipeline
-
-- Multi-Index RAG Pipeline = system combining semantic search (vector index) and lexical search (BM25 index) for improved retrieval accuracy.
-- Key Components:
-- Vector Index = semantic similarity search using embeddings
-- BM25 Index = lexical/keyword-based search
-- Retriever Class = wrapper that forwards queries to both indexes and merges results
-- Reciprocal Rank Fusion = technique for merging search results from different indexes. Formula: RRF_score = sum of (1/(rank + 1)) across all search methods for each document. Documents ranked by highest combined score.
-- Example: Vector search returns [doc2, doc7, doc6], BM25 returns [doc6, doc2, doc7]. After RRF calculation, final ranking becomes [doc2, doc6, doc7] because doc2 ranked high in both methods.
-- Benefits:
-
-### Reranking Results
-
-- Reranking = post-processing step that uses LLM to reorder search results by relevance after initial retrieval.
-- Process: Run vector + BM25 search → merge results → pass to LLM with prompt asking to rank documents by relevance → get reordered results.
-- Implementation details: Use document IDs instead of full text for efficiency. LLM receives user query + candidate documents + instruction to return most relevant docs in decreasing order. Assistant message pre-fill + stop sequence ensures structured JSON output.
-- Tradeoffs: Increases search accuracy by leveraging LLM's understanding of semantic relevance. Increases latency due to additional LLM call. Particularly effective when initial retrieval methods miss nuanced query intent (e.g., "ENG team" vs "engineering team").
-- Example improvement: Query "What did engineering team do with incident 2023?" correctly prioritized software engineering section over cybersecurity section after reranking, despite hybrid search initially ranking it lower.
-
-### Contextual Retrieval
-
-- Contextual Retrieval = technique to improve RAG pipeline accuracy by adding context to document chunks before embedding.
-- Problem: When documents are split into chunks, individual chunks lose context from the original document, reducing retrieval accuracy.
-- Solution: Pre-processing step that adds contextual information to each chunk before inserting into retriever database.
-- Process:
-- 1. Take individual chunk + original source document
-- 2. Send to LLM (Claude) with prompt asking to generate situating context
-- 3. LLM generates brief context explaining chunk's relationship to larger document
-- 4. Join generated context with original chunk = "contextualized chunk"
-
-### Extended Thinking
-
-- Extended Thinking = Claude feature that allows reasoning time before generating final response
-- Key mechanics:
-- Displays separate thinking process visible to users
-- Increases accuracy for complex tasks but adds cost (charged for thinking tokens) and latency
-- Thinking budget = minimum 1024 tokens allocated for thinking phase
-- Max tokens must exceed thinking budget (e.g., budget 1024 requires max_tokens ≥ 1025)
-- When to use:
-- Enable after prompt optimization fails to achieve desired accuracy
-
-### Image Support
-
-- Claude Vision Capabilities = ability to process images within user messages for analysis, comparison, counting, and description tasks.
-- Image Limitations:
-- Max 100 images per request
-- Size/dimension restrictions apply
-- Images consume tokens (charged based on pixel height/width calculation)
-- Image Block Structure = special block type within user messages that holds either raw image data (base64) or URL reference to online image. Multiple image blocks allowed per message.
-- Critical Success Factor = strong prompting techniques required for accurate results. Simple prompts often fail.
-- Prompting Techniques for Images:
-
-### PDF Support
-
-- PDF Support in Claude:
-- Claude can read PDF files directly using similar code to image processing.
-- Key implementation changes:
-- File type = "document" instead of "image"
-- Media type = "application/pdf" instead of "image/png"
-- Variable naming = file_bytes instead of image_bytes
-- Claude PDF capabilities = read text + images + charts + tables + mixed content extraction
-- PDF processing = one-stop solution for comprehensive document analysis
-
-### Citations
-
-- Citations = feature allowing Claude to reference source documents and show where information comes from
-- Citation types:
-- citation_page_location = for PDF documents, shows document index/title/start page/end page/cited text
-- citation_char_location = for plain text, shows character position in text block
-- Implementation:
-- Add "citations": {"enabled": true} to request
-- Add "title" field to identify source document
-- Works with both PDF files and plain text sources
-
-### Prompt Caching
-
-- Prompt Caching = feature that speeds up Claude's responses and reduces text generation costs by reusing computational work from previous requests.
-- Normal request flow: User sends message → Claude processes input (creates internal data structures, performs calculations) → Claude generates output → Claude discards all processing work → Ready for next request.
-- Problem: When follow-up requests contain identical input messages, Claude must repeat all the same computational work it just threw away, creating inefficiency.
-- Solution: Prompt caching stores the results of input message processing in temporary cache instead of discarding. When identical input appears in subsequent requests, Claude retrieves cached work rather than reprocessing, dramatically speeding response generation.
-- Key benefit: Reuses previous computational work to avoid redundant processing of repeated content.
-
-### Rules of Prompt Caching
-
-- Prompt Caching = system that saves processing work from initial request to reuse in follow-up requests with identical content
-- Core mechanism: Initial request → Claude processes + saves work to cache → Follow-up requests with identical content → Claude retrieves cached work instead of reprocessing
-- Cache duration = 1 hour maximum
-- Cache activation requires manual cache breakpoint addition to message blocks
-- Text block formats:
-- Shorthand: content = "text string" (cannot add cache control)
-- Longhand: content = [{"type": "text", "text": "content", "cache_control": {...}}] (required for caching)
-- Cache scope = all content up to and including breakpoint gets cached
-
-### Prompt Caching in Action
-
-- Prompt Caching Implementation = automatically caches tool schemas and system prompts to reduce token usage
-- Setup = modify chat function to enable caching by default for tools and system prompts
-- Tool Schema Caching = add cache_control field with type "ephemeral" to last tool in list. Best practice: create copy of tools list, clone last tool schema, add cache control, then overwrite to avoid modifying original schemas
-- System Prompt Caching = wrap system prompt in text block dictionary with cache_control type "ephemeral"
-- Multiple Cache Breakpoints = can set cache points for both tools and system prompt in single request
-- Cache Order = tools → system prompt → messages
-- Token Usage Patterns:
-- cache_creation_input_tokens = tokens written to cache on first use
-
-### Code Execution and the Files API
-
-- Files API = allows uploading files ahead of time and referencing them later via file ID instead of including raw file data in each request. Upload file → get file metadata object with ID → use ID in future requests.
-- Code Execution = server-based tool where Claude executes Python code in isolated Docker containers. No implementation needed, just include predefined tool schema. Claude can run code multiple times, interpret results, generate final response.
-- Key constraints: Docker containers have no network access. Data input/output relies on Files API integration.
-- Combined workflow: Upload file via Files API → get file ID → include ID in container upload block → ask Claude to analyze → Claude writes/executes code with access to uploaded file → returns analysis and results.
-- Claude can generate files (plots, reports) inside container that can be downloaded using file IDs returned in response.
-- Use cases: Data analysis, file processing, automated code generation for complex tasks. Response contains code blocks, execution results, and final analysis.
-- Implementation: Use container upload block with file ID, include analysis prompt, Claude handles code execution automatically.
-
-### Introducing MCP
-
-- MCP = Model Context Protocol, communication layer providing Claude with context and tools without requiring developers to write tedious code.
-- Architecture: MCP client connects to MCP server. Server contains tools, resources, and prompts as internal components.
-- Problem solved: Eliminates burden of authoring/maintaining numerous tool schemas and functions for service integrations. Example: GitHub chatbot would require implementing tools for repositories, pull requests, issues, projects - significant developer effort.
-- Solution: MCP server handles tool definition and execution instead of your application server. MCP servers = interfaces to outside services, wrapping functionality into ready-to-use tools.
-- Key benefits: Developers avoid writing tool schemas and function implementations themselves.
-- Common questions:
-- Who creates MCP servers? Anyone, often service providers make official implementations (AWS, etc.)
-- vs direct API calls? MCP eliminates need to author tool schemas/functions yourself
-
-### MCP Clients
-
-- MCP Client = communication interface between your server and MCP server, provides access to server's tools
-- Transport agnostic = client/server can communicate via multiple protocols (stdio, HTTP, WebSockets)
-- Common setup = client and server on same machine using standard input/output
-- Communication = message exchange defined by MCP spec
-- Key message types:
-- list tools request = client asks server for available tools
-- list tools result = server responds with tool list
-- call tool request = client asks server to run tool with arguments
-
-### Project Setup
-
-- CLI-based chatbot project = teaches MCP client-server interaction through hands-on implementation
-- Project components:
-- MCP client = connects to custom MCP server
-- MCP server = provides 2 tools (read document, update document)
-- Document collection = fake documents stored in memory only
-- Key distinction: Normal projects implement either client OR server, not both. This project implements both for educational purposes.
-- Setup process:
-- 1. Download CLI_project.zip starter code
-
-### Defining Tools with MCP
-
-- MCP server implementation using Python SDK creates tools through decorators rather than manual JSON schemas.
-- MCP Python SDK = Official package that auto-generates tool JSON schemas from Python function definitions using @mcp.tool decorator.
-- Tool definition syntax = @mcp.tool(name="tool_name", description="description") + function with typed parameters using Field() for argument descriptions.
-- Two tools implemented:
-- 1. read_doc_contents = Takes doc_id string, returns document content from in-memory docs dictionary
-- 2. edit_document = Takes doc_id, old_string, new_string parameters, performs find/replace on document content
-- Error handling = Check if doc_id exists in docs dictionary, raise ValueError if not found.
-- Key advantage = SDK eliminates manual JSON schema writing, generates schemas automatically from Python function signatures and decorators.
-
-### The Server Inspector
-
-- MCP Inspector = in-browser debugger for testing MCP servers without connecting to applications
-- Access: Run \`mcp dev [server_file.py]\` in terminal → opens server on port → navigate to provided URL in browser
-- Interface: Left sidebar has connect button → top menu shows resources/prompts/tools sections → tools section lists available tools → click tool to open right panel for manual testing
-- Testing workflow: Connect to server → navigate to tools → select specific tool → input required parameters → click run tool → verify output
-- Key features: Live development testing, manual tool invocation, parameter input forms, success/failure feedback, no need for full application integration
-- Note: UI actively changing during development, core functionality remains similar
-- Example usage: Test document tools by inputting document IDs, verify read operations, test edit operations, chain operations to verify changes
-- Primary benefit: Debug MCP server implementations efficiently during development phase
-
-### Implementing a Client
-
-- MCP Client Implementation:
-- MCP Client = wrapper class around client session for resource cleanup and connection management to MCP server
-- Client Session = actual connection to MCP server from MCP Python SDK, requires resource cleanup on close
-- Client Purpose = exposes MCP server functionality to rest of codebase, enables reaching out to server for tool lists and tool execution
-- Key Functions:
-- list_tools() = await self.session.list_tools(), return result.tools
-- call_tool() = await self.session.call_tool(tool_name, tool_input)
-- Usage Flow = client gets tool definitions to send to Claude, then executes tools when Claude requests them
-
-### Defining Resources
-
-- MCP Resources = mechanism allowing MCP servers to expose data to clients for read operations
-- Resource Types = 2 types: direct (static URI like "docs://documents") and templated (parameterized URI like "docs://documents/{doc_id}")
-- URI = address/identifier for accessing specific resource, defined when creating resource
-- Resource Flow = client sends read resource request with URI → server matches URI to function → server executes function → returns data in read resource result
-- Implementation = use @mcp.resource decorator with URI and MIME type parameters
-- MIME Types = hint to client about returned data format (application/json for structured data, text/plain for plain text)
-- Templated Resources = URI parameters automatically parsed by SDK and passed as keyword arguments to handler function
-- Resource vs Tools = resources provide data proactively (fetch document contents when @ mentioned), tools perform actions reactively (when Claude decides to call them)
-
-### Accessing Resources
-
-- MCP Resource Access Implementation:
-- Resource Reading Function = client-side function to request and parse resources from MCP server
-- Function Parameters = URI (resource identifier)
-- Implementation Steps:
-- Import json module + AnyURL from pydantic
-- Call await self.session.read_resource(AnyURL(uri))
-- Extract first element from result.contents[0]
-- Check resource.mime_type for parsing strategy
-
-### Defining Prompts
-
-- MCP Prompts = Pre-defined, tested prompt templates that MCP servers expose to client applications for specialized tasks.
-- Purpose = Instead of users writing ad-hoc prompts, server authors create high-quality, evaluated prompts tailored to their server's domain.
-- Implementation = Use @mcpserver.prompt decorator with name/description, define function that returns list of messages (user/assistant messages that can be sent directly to Claude).
-- Example Use Case = Document formatting prompt that takes document ID, instructs Claude to read document using tools, reformat to markdown, and save changes.
-- Key Benefits = Server-specific expertise, pre-tested quality, reusable across client applications, better results than user-generated prompts.
-- Message Structure = Returns base.UserMessage objects containing the formatted prompt text with interpolated parameters.
-- Client Integration = Prompts appear as autocomplete options (slash commands) in client applications, prompt user for required parameters, then execute the pre-built prompt workflow.
-
-### Prompts in the Client
-
-- MCP Client Prompt Implementation:
-- List prompts = await self.session.list_prompts(), return result.prompts
-- Get prompt = await self.session.get_prompt(prompt_name, arguments), return result.messages
-- Prompt workflow:
-- 1. Define prompt in MCP server with expected arguments (e.g., document_id)
-- 2. Client calls get_prompt with prompt name + arguments dictionary
-- 3. Arguments passed as keyword arguments to prompt function
-- 4. Function interpolates arguments into prompt text
-
-### Anthropic Apps
-
-- Anthropic Apps = two deployed applications by Anthropic: Claude Code and Computer Use.
-- Claude Code = terminal-based coding assistant that serves as example of agent architecture.
-- Computer Use = toolset that expands Claude's capabilities beyond text generation.
-- Key purpose = these apps demonstrate agent concepts and provide practical examples for understanding agent design and implementation.
-- Setup process = involves terminal configuration for Claude Code usage on sample projects.
-- Agent connection = both applications exemplify how agents work, serving as learning models for building effective agents.
-
-### Claude Code Setup
-
-- Claude Code = terminal-based coding assistant program that helps with code-related tasks
-- Core capabilities = search/read/edit files + advanced tools (web fetching, terminal access) + MCP client support for expanded functionality via MCP servers
-- Setup process:
-- 1. Install Node.js (check with "npm help" command)
-- 2. Run npm install to install Claude Code
-- 3. Execute "claude" command in terminal to login to Anthropic account
-- Full setup guide = docs.anthropic.com
-- MCP client functionality = can consume tools from MCP servers to extend capabilities beyond basic file operations
-
-### Claude Code in Action
-
-- Claude Code = AI coding assistant that functions as a collaborative engineer on projects, not just a code generator.
-- Key capabilities: project setup, feature design, code writing, testing, deployment, error fixing in production.
-- Setup workflow:
-- Download project, open in editor
-- Run \`claude\` command to launch
-- Ask Claude to read README and execute setup directions
-- Run \`init\` command = Claude scans codebase for architecture/coding style, creates claude.md file
-- claude.md = automatically included context for future requests
-
-### Enhancements with MCP Servers
-
-- Claude Code = AI assistant with embedded MCP (Model Context Protocol) client that can connect to MCP servers to expand functionality.
-- MCP Server Integration = Connect external tools/services to Claude Code via command: \`claude mcp add [server-name] [startup-command]\`
-- Example Implementation = Document processing server exposing "Document Path to Markdown" tool, allowing Claude Code to read PDF/Word documents by running \`uv run main.py\`
-- Dynamic Capability Expansion = MCP servers add new functions to Claude Code in real-time without core modifications.
-- Common Use Cases = Production monitoring (Sentry), project management (Jira), communication (Slack), custom development workflow tools.
-- Key Benefit = Significant flexibility increase for development workflows through modular server connections.
-- Setup Process = 1) Create MCP server with tools, 2) Add server to Claude Code with name and startup command, 3) Restart Claude Code to access new capabilities.
-
-### Parallelizing Claude Code
-
-- Parallelizing Claude Code = running multiple Claude instances simultaneously to complete different tasks in parallel
-- Core Problem = multiple Claude instances modifying same files simultaneously creates conflicts and invalid code
-- Solution = Git work trees providing isolated workspaces per Claude instance
-- Git Work Trees = feature creating complete project copies in separate directories, each corresponding to different Git branches
-- Workflow = create work tree → assign task to Claude instance → work in isolation → commit changes → merge back to main branch
-- Custom Commands = automating work tree creation/management through .claude/commands directory with markdown files containing prompts
-- Command Structure = .claude/commands/filename.md with $ARGUMENTS placeholder for dynamic values
-- Parallel Execution Benefits = single developer commanding virtual team of software engineers, major productivity scaling limited only by engineer's management capacity
-
-### Automated Debugging
-
-- Automated Debugging = using AI (Claude) to automatically detect, analyze, and fix production errors without manual intervention.
-- Core Workflow:
-- 1. GitHub Action runs daily to check production environment
-- 2. Fetches CloudWatch logs from last 24 hours
-- 3. Claude identifies errors, deduplicates them
-- 4. Claude analyzes each error and generates fixes
-- 5. Creates pull request with proposed solutions
-- Key Components:
-
-### Computer Use
-
-- Computer Use = Claude's ability to interact with computer interfaces through visual observation and control actions.
-- Key capabilities:
-- Takes screenshots of applications/browsers
-- Clicks buttons, types text, navigates interfaces
-- Follows multi-step instructions autonomously
-- Performs QA testing and automation tasks
-- How it works:
-- Runs in isolated Docker container environment
-
-### How Computer Use Works
-
-- Computer use = tool system implementation allowing Claude to interact with computing environments
-- Tool use flow: User sends message + tool schema → Claude responds with tool use request (ID, name, input) → Server executes code → Result sent back to Claude as tool result
-- Computer use follows identical flow:
-- Special tool schema sent to Claude (small schema expands to larger structure behind scenes)
-- Expanded schema includes action function with arguments: mouse move, left click, screenshot, etc.
-- Claude sends tool use request
-- Developers must fulfill request via computing environment (typically Docker container)
-- Container executes programmatic key presses/mouse movements
-
-### Agents and Workflows
-
-- Workflows and agents = strategies for handling user tasks that can't be completed by Claude in a single request.
-- Decision rule: Use workflows when you have precise task understanding and know exact steps sequence. Use agents when task details are unclear.
-- Workflow = series of calls to Claude for specific problems where steps are predetermined.
-- Example workflow: Image to 3D model converter
-- Step 1: Claude describes uploaded image in detail
-- Step 2: Claude uses CADQuery Python library to model object from description
-- Step 3: Create rendering of model
-- Step 4: Claude compares rendering to original image
-
-### Parallelization Workflows
-
-- Parallelization Workflows = breaking one complex task into multiple simultaneous subtasks, then aggregating results.
-- Example: Material selection for parts
-- Instead of: One large prompt asking Claude to choose between metal/polymer/ceramic/composite with all criteria
-- Use: Separate parallel requests, each evaluating one material's suitability, then final aggregation step to compare results
-- Structure: Input → Multiple parallel subtasks → Aggregator → Final output
-- Benefits:
-- Focus = Each subtask handles one specific analysis instead of juggling multiple considerations
-- Modularity = Individual prompts can be improved/evaluated separately
-
-### Chaining Workflows
-
-- Chaining Workflows = breaking large tasks into series of distinct sequential steps rather than single complex prompt
-- Core concept: Instead of one massive prompt with multiple requirements, split into separate calls where each focuses on one specific subtask.
-- Example workflow: User enters topic → search trending topics → Claude selects most interesting → Claude researches topic → Claude writes script → generate video → post to social media
-- Key benefit: Allows AI to focus on individual tasks rather than juggling multiple constraints simultaneously
-- Primary use case: When Claude consistently ignores constraints in complex prompts despite repetition. Common with long prompts containing many "don't do X" requirements.
-- Problem scenario: Long prompt with constraints (don't mention AI, no emojis, professional tone) → Claude violates some constraints regardless of repetition
-- Solution: Step 1 - Send initial prompt, accept imperfect output. Step 2 - Follow-up prompt asking Claude to rewrite based on specific violations found.
-- Critical insight: Even simple-seeming workflow becomes essential when dealing with constraint-heavy prompts that AI struggles to follow completely in single pass.
-
-### Routing Workflows
-
-- Routing Workflows = workflow pattern that categorizes user input to determine appropriate processing pipeline
-- Key mechanism: Initial request to Claude categorizes user input into predefined genres/categories. Based on categorization response, system routes to specialized processing pipeline with customized prompts/tools.
-- Example flow:
-- 1. User enters topic (e.g., "Python functions")
-- 2. Claude categorizes topic (e.g., "educational")
-- 3. System uses educational-specific prompt template
-- 4. Claude generates script with educational tone/structure
-- Benefits: Ensures output matches topic nature. Programming topics get educational treatment with definitions/explanations. Entertainment topics get trendy language/engaging hooks.
-
-### Agents and Tools
-
-- Agents = AI systems that create plans to complete tasks using provided tools, effective when exact steps are unknown. Workflows = better when precise steps are known.
-- Key differences: Workflows require predetermined steps, agents dynamically plan using available tools.
-- Agent advantages: Flexibility to solve variety of tasks with same toolset, can combine tools in unexpected ways.
-- Tool abstraction principle: Provide generic/abstract tools rather than hyper-specialized ones. Example - Claude code uses bash, web_fetch, file_write (abstract) rather than refactor_tool, install_dependencies (specialized).
-- Tool combination examples: get_current_datetime + add_duration + set_reminder can solve various time-related tasks through different combinations.
-- Agent behavior: Can request additional information when needed, combines tools creatively to achieve goals, works best with small set of flexible tools.
-- Design approach: Give agent abstract tools that can be pieced together rather than single-purpose specialized tools. This enables dynamic problem-solving and unexpected use cases.
-
-### Environment Inspection
-
-- Environment Inspection = agents evaluating their environment and action results to understand progress and handle errors.
-- Core concept: After each action, agents need feedback mechanisms beyond basic tool returns to understand new environment state.
-- Computer use example: Claude takes screenshot after every action (typing, clicking) to see how environment changed, since it cannot predict exact results of actions like button clicks.
-- Code editing example: Before modifying files, agents must read current file contents to understand existing state.
-- Social media video agent applications:
-- Use Whisper CPP via bash to generate timestamped captions, verify dialogue placement
-- Use FFmpeg to extract video screenshots at intervals, inspect visual results
-- Validate video creation meets expectations before posting
-
-### Workflows vs Agents
-
-- Workflows = pre-defined series of calls to Claude with known exact steps. Agents = flexible approach using basic tools that Claude combines to complete unknown tasks.
-- Key differences:
-- Task division: Workflows break big tasks into smaller, specific subtasks enabling higher focus and accuracy. Agents handle varied challenges creatively without predetermined steps.
-- Testing/evaluation: Workflows easier to test due to known execution sequence. Agents harder to test since execution path unpredictable.
-- User experience: Workflows require specific inputs. Agents create own inputs from user queries and can request additional input when needed.
-- Success rates: Workflows = higher task completion rates due to structured approach. Agents = lower completion rates due to delegated complexity.
-- Recommendation: Prioritize workflows for reliability. Use agents only when flexibility truly required. Users want 100% working products over fancy agents.
-- Core principle: Solve problems reliably first, innovation second.
-
-## Preguntas de repaso
-
-- Cual es el objetivo practico de este curso?
-- Que conceptos o herramientas aparecen repetidamente?
-- Que decisiones humanas no deberian delegarse por completo a la IA?
-- Que evidencias o verificaciones exige el flujo de trabajo presentado?
-- Que skill de LinkedIn representa mejor esta certificacion?
+- Todo pasa por **`POST /v1/messages`**; herramientas, thinking, structured outputs y caché son parámetros/bloques de esa misma llamada.
+- La API es **sin estado**: reenvía el historial completo; el primer mensaje es `user`.
+- `content` es una **lista de bloques**; comprueba `block.type` antes de leer `.text`.
+- El bucle de **tool use**: `tool_use` → ejecutas → `tool_result` con el `tool_use_id` correcto → repites hasta `end_turn`.
+- **Thinking adaptativo** + parámetro **effort** sustituyen al obsoleto `budget_tokens`.
+- **Salidas estructuradas** con `output_config.format` o `messages.parse()`; el viejo `output_format` está obsoleto.
+- **Streaming obligatorio** con `max_tokens` alto; usa `get_final_message()`/`finalMessage()`.
+- **Caché de prompts** = emparejamiento por prefijo; estable primero, volátil al final; verifica con `cache_read_input_tokens`.
+- Maneja todos los **`stop_reason`** (sobre todo `tool_use`, `max_tokens`, `refusal`).
+- Usa **IDs de modelo exactos**; nunca los inventes.
+- Para contar tokens, **`count_tokens`**, nunca `tiktoken`.
+- **Batches** = 50% más barato y asíncrono; **Files** = subir una vez, referenciar por `file_id`.
+- Usa **excepciones tipadas** del SDK; los 429/5xx se reintentan solos con backoff.

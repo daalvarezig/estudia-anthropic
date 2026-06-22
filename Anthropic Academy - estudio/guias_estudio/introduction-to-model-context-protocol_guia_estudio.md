@@ -1,152 +1,78 @@
-# Introduction to Model Context Protocol
+## Resumen
 
-Fuente: https://anthropic.skilljar.com/introduction-to-model-context-protocol
+El **Model Context Protocol (MCP)** es un protocolo abierto que estandariza cómo las aplicaciones de IA (como Claude) se conectan con fuentes de datos externas, herramientas y sistemas. La idea central es resolver el problema "M×N": antes de MCP, cada aplicación de IA (M) necesitaba una integración a medida con cada herramienta o fuente de datos (N), multiplicando el trabajo de integración. MCP convierte ese problema en "M+N": cada herramienta expone un único servidor MCP y cada aplicación implementa un único cliente MCP, y todo se entiende entre sí mediante un protocolo común.
 
-## Para que sirve
+A menudo se describe MCP con la analogía del **"USB-C de las aplicaciones de IA"**: un conector universal entre modelos y el mundo exterior (archivos, bases de datos, APIs, herramientas internas). Fue presentado por Anthropic a finales de 2024 como estándar abierto, y se basa en **JSON-RPC 2.0** para la mensajería.
 
-Learn to build Model Context Protocol servers and clients from scratch using Python. Master MCP's three core primitives—tools, resources, and prompts—to connect Claude with external services
+Esta guía está pensada para quien prepara la certificación oficial **"Introduction to Model Context Protocol (MCP)"** de Anthropic Academy: desarrolladores, ingenieros de IA y técnicos que quieran entender qué es MCP, su arquitectura, sus primitivas y cómo construir o consumir servidores y clientes MCP.
 
-## Cobertura del scrape
+## Conceptos clave
 
-- Lecciones visibles en pagina de curso: 14
-- Contenido extenso embebido: si
-- PDFs detectados: 0
-- Videos detectados en pagina principal: 8
-- Lecciones bloqueadas al abrir pagina individual: 14
+- **Problema M×N vs M+N**: MCP estandariza las integraciones para que no haya que escribir una conexión específica por cada par (modelo, herramienta). Un servidor MCP sirve a cualquier cliente compatible.
+- **Arquitectura cliente-servidor (host / client / server)**:
+  - **Host**: la aplicación de IA que el usuario maneja (Claude Desktop, Claude Code, un IDE, una app propia). Contiene el LLM y orquesta.
+  - **Client (cliente MCP)**: vive dentro del host; mantiene una conexión **1:1** con un servidor MCP y traduce entre el host y el servidor.
+  - **Server (servidor MCP)**: programa ligero que expone capacidades (datos, herramientas, prompts) a través del protocolo. Un host puede tener varios clientes, cada uno conectado a un servidor distinto.
+- **JSON-RPC 2.0**: formato de mensajes del protocolo. Se intercambian *requests*, *responses* y *notifications*. MCP define un ciclo de vida con **inicialización** (handshake con negociación de capacidades y versión del protocolo), operación y cierre.
+- **Las tres primitivas del servidor**:
+  - **Tools (herramientas)**: funciones ejecutables que el modelo puede invocar para *actuar* (consultar una API, escribir en una BD, enviar un email). Son **model-controlled**: el modelo decide cuándo llamarlas (con aprobación del usuario). Cada tool tiene nombre, descripción y un `inputSchema` en JSON Schema.
+  - **Resources (recursos)**: datos de solo lectura que dan **contexto** al modelo (archivos, registros, contenido de una URI). Son **application-controlled**: la app decide cómo y cuándo exponerlos. Se identifican por URI.
+  - **Prompts**: plantillas predefinidas y reutilizables de instrucciones/flujos. Son **user-controlled**: típicamente el usuario las invoca (p. ej. como slash commands).
+- **Primitivas del cliente** (capacidades que el servidor puede pedir al cliente):
+  - **Sampling**: el servidor solicita al host una *completion* del LLM, permitiendo comportamientos agénticos sin que el servidor tenga su propia clave de API. El host mantiene el control y puede revisar la petición.
+  - **Roots**: el cliente informa al servidor de los límites del sistema de archivos o recursos sobre los que puede operar.
+  - **Elicitation**: el servidor pide información adicional al usuario a mitad de una operación (añadido en revisiones recientes del protocolo).
+- **Transportes**:
+  - **stdio**: entrada/salida estándar, ideal para servidores locales que el host lanza como subproceso.
+  - **Streamable HTTP** (con Server-Sent Events): transporte para servidores remotos. Sustituye al antiguo "HTTP+SSE" en revisiones recientes del protocolo.
+- **Descubrimiento de capacidades**: tras la inicialización, el cliente consulta al servidor con métodos tipo `tools/list`, `resources/list`, `prompts/list`, y luego ejecuta con `tools/call`, `resources/read`, `prompts/get`.
+- **SDKs oficiales**: existen SDKs en Python, TypeScript, Java/Kotlin, C#, entre otros, para construir clientes y servidores sin implementar el protocolo a mano.
+- **Seguridad y consentimiento**: principio rector de MCP. El usuario debe consentir y entender qué datos se comparten y qué herramientas se ejecutan; las llamadas a tools requieren aprobación (human-in-the-loop). Riesgos a vigilar: inyección de prompts, herramientas maliciosas, exfiltración de datos.
 
-## Secciones
+## Que necesitas dominar para el certificado
 
-### MCP fundamentals & server development
+- **Definición y propósito de MCP**: qué problema resuelve (M×N → M+N) y la analogía del USB-C. Saber que es un estándar **abierto** y que usa **JSON-RPC 2.0**.
+- **Arquitectura y roles**: distinguir con claridad **host vs client vs server**, y recordar que la relación cliente↔servidor es **1:1**, mientras un host puede tener **varios** clientes.
+- **Las tres primitivas del servidor y quién las controla**:
+  - Tools → **model-controlled** (acciones).
+  - Resources → **application-controlled** (contexto de solo lectura, por URI).
+  - Prompts → **user-controlled** (plantillas).
+  Es de lo más preguntado: asocia cada primitiva con su tipo de control y con un ejemplo.
+- **Primitivas del cliente**: qué es **sampling** (servidor pide completion al host) y **roots**.
+- **Ciclo de vida y mensajes**: inicialización con negociación de capacidades; métodos `*/list` y `*/call`/`*/read`/`*/get`.
+- **Transportes**: cuándo usar **stdio** (local) y cuándo **Streamable HTTP/SSE** (remoto).
+- **Construcción práctica**: cómo se ve un servidor mínimo (definir una tool con su esquema, registrar un resource) y cómo se conecta un host como Claude Desktop o Claude Code mediante un archivo de configuración.
+- **Seguridad**: consentimiento del usuario, aprobación de tools, y los riesgos principales.
 
-Start with understanding MCP's architecture and why it exists. Build your first MCP server with tools using the Python SDK, then test it with the built-in inspector.
+## Plan de estudio
 
-### MCP client implementation & advanced features
+1. **Fundamentos (1-2 h)**: lee la introducción oficial de MCP y la documentación de arquitectura. Memoriza host/client/server y el problema M+N. Escribe con tus palabras la diferencia entre las tres primitivas.
+2. **Primitivas en profundidad (2 h)**: para tools, resources y prompts, anota: quién las controla, para qué sirven, y un ejemplo concreto. Haz lo mismo con sampling y roots. Crea una tabla mental.
+3. **Manos a la obra: un servidor (2-3 h)**: usa el quickstart oficial y el SDK de Python o TypeScript para construir un servidor MCP mínimo con una tool (p. ej. "obtener el tiempo") y un resource. Esto fija los conceptos mucho mejor que solo leer.
+4. **Conéctalo a un host (1 h)**: configura tu servidor en **Claude Desktop** o **Claude Code** editando el archivo de configuración (los `mcpServers`). Observa el handshake, el listado de tools y una llamada con su aprobación.
+5. **Transportes y ciclo de vida (1 h)**: practica con stdio en local y revisa cómo sería un servidor remoto por Streamable HTTP. Repasa el flujo de inicialización.
+6. **Seguridad (30 min)**: estudia el modelo de consentimiento y los riesgos (prompt injection, tools no fiables). Es tema de examen y de buenas prácticas reales.
+7. **Repaso final**: usa estas flashcards y el test. Apúntate los fallos y vuelve a la sección correspondiente.
 
-Build the client side to communicate with MCP servers. Implement resources for direct data access and prompts for pre-built instructions. See how everything connects in a complete application flow.
+## Errores comunes y tips
 
-## Resumen de estudio
+- **Confundir host y client**: el *host* es la app completa (con el LLM); el *client* es el componente interno que habla con UN servidor. No son sinónimos.
+- **Olvidar quién controla cada primitiva**: el error clásico es decir que las tools las controla el usuario. Las **tools** las decide el **modelo** (con aprobación humana); los **prompts** los invoca el **usuario**; los **resources** los gestiona la **aplicación**.
+- **Creer que MCP es un producto de Anthropic cerrado**: es un **estándar abierto**; cualquiera puede crear servidores y clientes, y hay SDKs en varios lenguajes y adopción de múltiples empresas.
+- **Pensar que el servidor MCP necesita su propia API key del LLM**: no necesariamente; con **sampling** puede pedir completions al host, que controla el acceso al modelo.
+- **Mezclar transportes**: stdio es para local (subproceso); HTTP (Streamable HTTP/SSE) es para remoto. Recuerda que el transporte HTTP+SSE antiguo fue reemplazado por Streamable HTTP en revisiones recientes.
+- **No mencionar el consentimiento**: en preguntas de seguridad, la respuesta correcta casi siempre gira en torno al **consentimiento explícito del usuario** y la **aprobación de cada llamada a tool**.
+- **Tip**: recuerda "JSON-RPC 2.0" como el formato de mensajes; suele aparecer como opción correcta frente a REST, gRPC o GraphQL.
+- **Tip**: la relación cliente-servidor es **1:1**; el host escala teniendo varios clientes, no metiendo varios servidores en un cliente.
 
-### Introducing MCP
+## Puntos clave para recordar
 
-- MCP = Model Context Protocol, communication layer providing Claude with context and tools without requiring developers to write tedious code.
-- Core Architecture: MCP client connects to MCP server. MCP server contains tools, resources, and prompts as internal components.
-- Problem Solved: Traditional approach requires developers to manually author tool schemas and functions for each service integration (like GitHub API tools). This creates maintenance burden for complex services with many features.
-- MCP Solution: Shifts tool definition and execution from developer's server to dedicated MCP server. MCP server = interface to outside service, wrapping functionality into pre-built tools.
-- Key Benefits: Eliminates need for developers to write/maintain tool schemas and function implementations. Someone else authors the tools, packages them in MCP server.
-- Common Questions:
-- Who authors MCP servers? Anyone, but often service providers create official implementations
-- Difference from direct API calls? Saves developer time by providing pre-built tool schemas/functions instead of manual authoring
-
-### MCP Clients
-
-- MCP Client = communication interface between your server and MCP server, provides access to server's tools.
-- Transport agnostic = client/server can communicate via multiple protocols (stdin/stdout, HTTP, WebSockets, etc). Common setup: both on same machine using stdin/stdout.
-- Communication = message exchange defined by MCP spec. Key message types:
-- list tools request/result = client asks server for available tools, server responds with tool list
-- call tool request/result = client asks server to run tool with arguments, server returns execution result
-- Typical flow: User query → Server asks MCP client for tools → MCP client sends list tools request to MCP server → Server gets tool list → Server sends query + tools to Claude → Claude requests tool execution → Server asks MCP client to run tool → MCP client sends call tool request to MCP server → MCP server executes tool (e.g., GitHub API call) → Results flow back through chain → Claude formulates final response → User gets answer.
-- MCP client acts as intermediary - doesn't execute tools itself, just facilitates communication between your server and MCP server that actually runs the tools.
-
-### Project Setup
-
-- MCP Learning Project = CLI-based chatbot implementing both client and server components for educational purposes.
-- Project Structure = Custom MCP client connects to custom MCP server, both built in same project.
-- Document System = Fake documents stored in memory only, no persistence.
-- Server Tools = Two tools implemented: read document contents, update document contents.
-- Real-world Context = Normally projects implement either client OR server, not both. This project does both for learning.
-- Setup Requirements = Download CLI_project.zip, extract, configure .env with API key, install dependencies.
-- Running Project = "uv run main.py" (with UV) or "python main.py" (without UV).
-- Verification = Chat prompt appears, responds to basic queries like "what's one plus one".
-
-### Defining Tools with MCP
-
-- MCP server implementation = Python SDK simplifies tool creation vs manual JSON schemas
-- Tool definition syntax = @mcp.tool decorator + function with typed parameters + Field descriptions
-- Document storage = in-memory dictionary with doc_id keys and content values
-- Tool 1 - read_doc_contents = takes doc_id string parameter, returns document content from docs dictionary, raises ValueError if doc not found
-- Tool 2 - edit_document = takes doc_id, old_string, new_string parameters, performs find/replace operation on document content, includes existence validation
-- MCP Python SDK benefits = auto-generates JSON schemas from decorated functions, single line server creation, eliminates manual schema writing
-- Parameter definition = use Field() with description for tool arguments, import from pydantic
-- Error handling = validate document existence before operations, raise ValueError for missing documents
-
-### The Server Inspector
-
-- MCP Inspector = in-browser debugger for testing MCP servers without connecting to actual applications
-- Access: Run \`mcp dev [server_file.py]\` in terminal with activated Python environment → opens server on port → visit provided localhost address
-- Interface: Left sidebar with Connect button → top navigation bar shows Resources/Prompts/Tools sections → Tools section lists available tools → click tool to open right panel for manual testing
-- Testing process: Select tool → input required parameters (like document ID) → click Run Tool → verify output/success message
-- Key features: Live development testing, tool invocation simulation, parameter input fields, success/failure feedback
-- Status: Inspector in active development - UI may change but core functionality remains similar
-- Usage pattern: Essential for MCP server development and debugging before production deployment
-
-### Implementing a Client
-
-- MCP Client Implementation:
-- MCP Client = wrapper class around client session for connecting to MCP server with resource cleanup management
-- Client Session = actual connection to MCP server from MCP Python SDK, requires cleanup when closing
-- Resource Cleanup = necessary process when shutting down, handled by connect/cleanup/async enter/async exit functions
-- Client Purpose = exposes MCP server functionality to rest of codebase, provides interface between application code and server
-- Key Functions:
-- list_tools() = await self.session.list_tools(), return result.tools
-- call_tool() = await self.session.call_tool(tool_name, tool_input)
-
-### Defining Resources
-
-- Resources = MCP server feature that exposes data to clients for read operations
-- Resource types:
-- Direct/Static = static URI (e.g., docs://documents)
-- Templated = parameterized URI with wildcards (e.g., documents/{doc_id})
-- Resource flow:
-- 1. Client sends read resource request with URI
-- 2. MCP server matches URI to resource function
-- 3. Server executes function, returns result
-
-### Accessing Resources
-
-- MCP Resource Access = method for clients to retrieve data from server resources
-- Client Implementation:
-- read_resource function = takes URI parameter, requests resource from MCP server
-- Uses await self.session.read_resource(AnyUrl(uri)) for server communication
-- Accesses result.contents[0] = first resource from returned contents list
-- Response Parsing:
-- Checks resource.mime_type property to determine data format
-- If mime_type == "application/json": returns json.loads(resource.text)
-
-### Defining Prompts
-
-- Prompts = pre-written, tested instructions that MCP servers expose to clients for specialized tasks
-- MCP Prompts Feature:
-- Servers define high-quality prompts tailored to their domain
-- Clients can access these prompts via slash commands (e.g., /format)
-- Alternative to users writing their own prompts manually
-- Implementation Pattern:
-- Use @prompt decorator with name and description
-- Function receives arguments (e.g., document ID)
-
-### Prompts in the Client
-
-- MCP Client Prompt Implementation:
-- List prompts function = await self.session.list_prompts(), return result.props
-- Get prompt function = await self.session.get_prompt(prompt_name, arguments), return result.messages
-- Prompt workflow = Client requests prompt by name → passes arguments as keyword parameters → MCP server interpolates arguments into prompt template → returns formatted messages for AI model
-- Arguments flow = Client arguments → prompt function keyword arguments → interpolated into prompt text (e.g., document_id parameter gets inserted into prompt template)
-- Return format = Messages array that forms conversation input for AI model
-- CLI usage = /format command → select document → prompt with document ID sent to Claude → Claude uses tools to fetch document → returns formatted result
-- Key concept = Prompts are server-defined templates that clients can invoke with parameters, enabling reusable AI instructions with dynamic content insertion.
-
-### MCP Review
-
-- MCP Server Primitives = 3 types: tools, resources, prompts
-- Tools = model-controlled primitives where Claude decides when to execute them. Used to add capabilities to Claude (e.g., JavaScript execution for calculations). Serve the model.
-- Resources = app-controlled primitives where application code decides when to fetch data. Used to get data into apps for UI display or prompt augmentation (e.g., autocomplete options, document listings from Google Drive). Serve the app.
-- Prompts = user-controlled primitives triggered by user actions like button clicks or slash commands. Used for predefined workflows (e.g., chat starter buttons in Claude interface). Serve users.
-- Control patterns determine purpose: Need Claude capabilities → implement tools. Need app data → use resources. Need user workflows → create prompts.
-- Real examples: Claude's chat starter buttons use prompts, Google Drive document selection uses resources, code execution uses tools.
-
-## Preguntas de repaso
-
-- Cual es el objetivo practico de este curso?
-- Que conceptos o herramientas aparecen repetidamente?
-- Que decisiones humanas no deberian delegarse por completo a la IA?
-- Que evidencias o verificaciones exige el flujo de trabajo presentado?
-- Que skill de LinkedIn representa mejor esta certificacion?
+- MCP = estándar **abierto** que conecta apps de IA con datos/herramientas; resuelve el problema **M×N → M+N**; "USB-C de la IA".
+- Mensajería sobre **JSON-RPC 2.0**; ciclo de vida con inicialización y negociación de capacidades.
+- Tres roles: **Host** (la app con el LLM), **Client** (1:1 con un servidor), **Server** (expone capacidades).
+- Tres primitivas del servidor: **Tools** (model-controlled, acciones), **Resources** (application-controlled, contexto de solo lectura por URI), **Prompts** (user-controlled, plantillas).
+- Primitivas del cliente: **Sampling** (servidor pide completion al host) y **Roots** (límites de acceso).
+- Transportes: **stdio** (local) y **Streamable HTTP/SSE** (remoto).
+- Descubrimiento y uso: `tools/list` + `tools/call`, `resources/list` + `resources/read`, `prompts/list` + `prompts/get`.
+- SDKs oficiales en Python, TypeScript, Java/Kotlin, C#, etc.
+- **Seguridad primero**: consentimiento explícito del usuario y aprobación human-in-the-loop de las herramientas.

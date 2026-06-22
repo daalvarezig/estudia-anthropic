@@ -1,12 +1,13 @@
 # 🎓 Estudia Anthropic
 
-Herramienta de estudio (Streamlit) para preparar las **certificaciones de Anthropic Academy**: organiza todos los cursos, te marca una ruta, te deja repasar con flashcards y tests, y te lleva al **curso oficial de cada certificación**.
+Herramienta de estudio (Streamlit) para preparar las **certificaciones de Anthropic Academy**: 19 cursos con guía propia, flashcards, tests y el enlace oficial de cada certificación.
 
 ## Qué incluye
-- 📊 Dashboard de todos los cursos + ruta de estudio recomendada
-- 🃏 Flashcards de repaso
-- ✅ Tests (modo rápido / simulacro)
-- 🎓 Enlace directo al curso oficial de cada certificación
+- 📚 **19 guías de estudio originales** (una por certificación, en castellano)
+- 📊 Dashboard + ruta de estudio recomendada
+- 🃏 Flashcards por curso
+- ✅ Tests por curso (modo rápido / simulacro)
+- 🎓 Enlace directo al curso oficial para certificarte
 
 ## Cómo usar
     git clone https://github.com/daalvarezig/estudia-anthropic.git
@@ -16,9 +17,9 @@ Herramienta de estudio (Streamlit) para preparar las **certificaciones de Anthro
     pip install -r requirements.txt
     streamlit run anthropic_study_app.py
 
-En **Windows**, activa con `.venv\Scripts\activate` en vez de `source .venv/bin/activate`. La app abre en http://localhost:8501
+En **Windows**, activa con `.venv\Scripts\activate`. La app abre en http://localhost:8501
 
 ## Nota importante
-Ayuda de estudio **no oficial**. El contenido de las lecciones es de Anthropic y se estudia en su plataforma oficial — este repo **NO** lo redistribuye: te da el **mapa de cursos** y el **enlace oficial** de cada uno para que te certifiques en [Anthropic Academy](https://anthropic.skilljar.com/).
+Las guías, flashcards y tests son **material original** de preparación (no oficial). El contenido de las lecciones es de Anthropic y se estudia en su plataforma oficial — este repo **NO** lo redistribuye: te da guías propias + el **enlace oficial** de cada curso para certificarte en [Anthropic Academy](https://anthropic.skilljar.com/).
 
 — por David Álvarez · itopy.ai

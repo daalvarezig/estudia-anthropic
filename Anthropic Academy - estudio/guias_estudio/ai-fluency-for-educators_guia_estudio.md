@@ -1,74 +1,70 @@
-# AI Fluency for Educators
+## Resumen
 
-Fuente: https://anthropic.skilljar.com/ai-fluency-for-educators
+**AI Fluency for Educators** es una certificación gratuita de Anthropic Academy pensada para docentes (profesorado de primaria, secundaria, universidad y formación de adultos), diseñadores instruccionales y personal educativo que quiere integrar la IA generativa —y en concreto Claude— en su práctica de forma **eficaz, ética y reflexiva**. No es un curso técnico de programación: es un marco de *fluidez* (fluency), es decir, la capacidad de colaborar con sistemas de IA de manera intencional, transparente y responsable.
 
-## Para que sirve
+El curso se apoya en el **marco AI Fluency** desarrollado por Rick Dakan y Joseph Feller (Anthropic) y articulado en torno a **las 4 Ds**: *Delegation, Description, Discernment y Diligence*. Para educadores, ese marco se aplica a tareas reales del día a día: preparar planificaciones de clase, generar rúbricas, diferenciar materiales para distintos niveles, dar feedback, diseñar evaluaciones y —muy importante— enseñar a su alumnado a usar la IA con integridad académica.
 
-This course empowers faculty, instructional designers, and educational leaders to apply AI Fluency into their own teaching practice and institutional strategy.
+Aprobar la certificación significa demostrar que entiendes qué es la IA generativa, cómo funciona Claude a alto nivel, cómo escribir buenas instrucciones (prompts), cómo verificar y supervisar resultados, y cómo abordar privacidad, sesgo, integridad académica y equidad en el aula.
 
-## Cobertura del scrape
+## Conceptos clave
 
-- Lecciones visibles en pagina de curso: 5
-- Contenido extenso embebido: si
-- PDFs detectados: 3
-- Videos detectados en pagina principal: 9
-- Lecciones bloqueadas al abrir pagina individual: 5
+- **IA Fluency (fluidez en IA)**: capacidad de interactuar con sistemas de IA de forma productiva y responsable. No es solo "saber usar la herramienta", sino colaborar con criterio, sabiendo qué delegar, cómo pedirlo, cómo juzgar la respuesta y cómo hacerlo de forma ética.
+- **El marco de las 4 Ds**:
+  - **Delegation (Delegación)**: decidir qué tareas tienen sentido para la IA, cuáles para ti y cuáles son colaborativas. Implica conocer las capacidades y los límites del modelo.
+  - **Description (Descripción)**: comunicar bien con la IA. Es el arte del *prompting*: dar contexto, rol, objetivo, formato, restricciones y ejemplos para obtener buenos resultados.
+  - **Discernment (Discernimiento)**: evaluar críticamente lo que produce la IA —exactitud, calidad, sesgo, tono— sin aceptarlo de forma acrítica.
+  - **Diligence (Diligencia)**: actuar de forma ética y responsable: transparencia sobre el uso de IA, respeto a la privacidad, honestidad académica y rendir cuentas del resultado final.
+- **IA generativa y LLM**: Claude es un *Large Language Model* que genera texto prediciendo la continuación más probable según su entrenamiento. No "sabe" ni "consulta una base de datos de verdades": produce lenguaje plausible, por eso requiere verificación.
+- **Alucinaciones (hallucinations)**: respuestas que suenan seguras pero son falsas o inventadas (citas, fechas, datos). Es el motivo central por el que el discernimiento y la verificación son obligatorios en educación.
+- **Prompting eficaz**: técnicas como dar contexto y rol ("eres un profesor de biología de 3º de ESO"), ser específico en formato y longitud, usar ejemplos (*few-shot*), pedir razonamiento paso a paso, e iterar/refinar la conversación.
+- **Ventana de contexto (context window)**: la cantidad de texto que el modelo puede "tener en mente" en una conversación (instrucciones + documentos adjuntos + historial + respuesta).
+- **Claude y la familia de modelos**: asistente de Anthropic disponible en Claude.ai, apps y vía API. La familia incluye modelos **Opus** (máxima capacidad/razonamiento), **Sonnet** (equilibrio capacidad/velocidad/coste) y **Haiku** (rápido y económico). Elegir el modelo adecuado es parte de la delegación.
+- **IA Constitucional (Constitutional AI)**: enfoque de Anthropic para alinear a Claude con principios de seguridad y utilidad usando un conjunto de principios ("constitución") en lugar de depender solo de etiquetado humano. Sustenta el énfasis de Anthropic en seguridad.
+- **Privacidad y datos**: no introducir datos personales del alumnado (notas, informes, datos sensibles) en herramientas de IA sin base legal y resguardo; conocer cómo se tratan los datos en planes de consumo vs. empresariales.
+- **Integridad académica**: distinguir uso legítimo (andamiaje, lluvia de ideas, feedback) de plagio o suplantación; diseñar tareas "resistentes a la IA" y políticas de aula transparentes.
+- **Sesgo y equidad**: los modelos pueden reflejar sesgos de sus datos de entrenamiento; el educador debe revisar materiales por estereotipos, accesibilidad y representación.
+- **Human-in-the-loop (humano en el bucle)**: el docente es siempre el responsable final; la IA asiste, no decide ni evalúa de forma autónoma a estudiantes.
 
-## Secciones
+## Que necesitas dominar para el certificado
 
-### Introduction and AI Fluency Framework
+1. **Explicar qué es la fluidez en IA** y por qué importa en educación (eficiencia + responsabilidad, no solo automatización).
+2. **El marco de las 4 Ds** de memoria: saber definir cada D, dar un ejemplo educativo de cada una y reconocerlas en escenarios.
+3. **Cómo funciona Claude a alto nivel**: que es un LLM generativo, que puede alucinar, qué es la ventana de contexto y la diferencia entre los modelos (Opus/Sonnet/Haiku) para elegir según la tarea.
+4. **Prompting aplicado a docencia**: redactar prompts con rol, contexto, objetivo, formato y restricciones; iterar; usar ejemplos. Saber detectar un prompt pobre y mejorarlo.
+5. **Discernimiento y verificación**: identificar alucinaciones, comprobar hechos y citas, revisar sesgos y adecuación al nivel del alumnado.
+6. **Ética y diligencia**: privacidad del estudiante, transparencia sobre el uso de IA, integridad académica, accesibilidad y equidad.
+7. **Casos de uso reales en el aula**: generar planes de clase, rúbricas, preguntas de evaluación, diferenciación de materiales, retroalimentación, traducción/adaptación y comunicación con familias —y conocer los límites de cada uno.
 
-A summary of Delegation, Description, Discernment, and Diligence applied to student contexts
+## Plan de estudio
 
-### AI Fluency Framework applications for educators
+1. **Crea una cuenta y úsala**: regístrate en Claude.ai y dedica 30 min a probar tareas docentes reales (un plan de clase, una rúbrica). La práctica fija el marco mejor que la teoría.
+2. **Memoriza las 4 Ds con ejemplos propios**: escribe una frase y un ejemplo de aula para Delegation, Description, Discernment y Diligence. Si puedes explicarlas con tus palabras, las dominas.
+3. **Practica prompting estructurado**: toma una tarea (p. ej. "examen de 10 preguntas sobre la fotosíntesis para 2º ESO") y reescríbela 3 veces añadiendo rol, nivel, formato y criterio de dificultad. Compara resultados.
+4. **Entrena el discernimiento**: pide a Claude datos verificables (fechas, citas, estadísticas) y compruébalos en una fuente fiable. Provoca y aprende a reconocer una alucinación.
+5. **Estudia el bloque ético**: repasa privacidad de datos del alumnado, integridad académica y sesgo. Redacta una mini-política de uso de IA para tu clase: es el mejor ejercicio integrador.
+6. **Repasa modelos y conceptos técnicos ligeros**: diferencia Opus/Sonnet/Haiku, qué es ventana de contexto y qué es IA Constitucional. Suelen caer preguntas conceptuales.
+7. **Autoevaluación**: usa las flashcards y el quiz de esta guía; repite los fallos. Antes del examen, repasa solo los puntos clave.
 
-Applying the 4D framework to course design and learning materials.
+## Errores comunes y tips
 
-## Resumen de estudio
+- **Confundir delegación con "automatizarlo todo"**: la delegación inteligente incluye decidir qué *no* delegar (evaluación final, decisiones sobre estudiantes, datos sensibles).
+- **Aceptar la primera respuesta sin verificar**: el examen valora el discernimiento. Nunca des por buenas citas, datos o fechas sin comprobarlos.
+- **Prompts vagos**: "hazme un examen" da malos resultados. Especifica nivel, asignatura, número de ítems, formato y dificultad.
+- **Tratar la diligencia como un añadido**: privacidad, transparencia e integridad académica son parte central, no un "extra al final".
+- **Creer que Claude accede a internet o a una base de datos de hechos por defecto**: genera lenguaje probable; sin herramientas de búsqueda, no "consulta" nada.
+- **Pensar que un solo modelo sirve para todo**: tarea de razonamiento profundo → modelo más capaz; tareas masivas y simples → modelo rápido/económico.
+- **Tip de examen**: ante un escenario, identifica qué "D" está en juego; muchas preguntas se resuelven mapeando el caso a Delegation/Description/Discernment/Diligence.
+- **Tip de aula**: la transparencia (decir cuándo y cómo se usó IA) es casi siempre la respuesta "correcta" en preguntas de ética.
 
-### Lesson 2: Applying AI Fluency to Course Design and Learning Outcomes
+## Puntos clave para recordar
 
-- **Lesson 2: Applying AI Fluency to Course Design and Learning Outcomes**
-- **Core Concept**
-- AI Fluency transforms course design by building rich, shared context that turns AI from generic assistant into collaborative partner who understands specific teaching situation, constraints, and pedagogical vision.
-- **Three Fundamental Course Design Tasks**
-- 1. Identifying content and concepts essential for students
-- 2. Mapping learning journey - how topics build on each other
-- 3. Articulating specific learning objectives
-- **4Ds Applied to Course Design**
-
-### Lesson 1: Introduction to AI Fluency for Educators
-
-- AI Fluency for Educators = framework for effective, efficient, ethical, safe AI integration in teaching practice
-- Course Purpose = applying 4D Framework (Delegation, Description, Discernment, Diligence) specifically to education contexts
-- Why AI Fluency Matters in Education:
-- Students already using AI
-- Employers expect AI fluency from graduates
-- Institutions need responsible AI integration strategies
-- Educators shape next generation's AI engagement
-- Course Outcomes:
-
-### Lesson 3: Applying AI Fluency to Learning Materials and Assignments
-
-- **LESSON 3: APPLYING AI FLUENCY TO LEARNING MATERIALS AND ASSIGNMENTS**
-- **CORE LEARNING OBJECTIVES**
-- Build teaching materials with AI using 4D framework
-- Leverage established context for coherent material development
-- Apply systematic quality control through Discernment
-- Create integrated learning experiences
-- **AI'S DISCIPLINARY IMPACT FRAMEWORK**
-- **Three Critical Questions for Disciplines:**
-
-## Recursos
-
-- https://www-cdn.anthropic.com/files/4zrzovbb/website/254a6304b42f3fb4dc52ab36b1c3e06f06819a44.pdf
-- https://www-cdn.anthropic.com/files/4zrzovbb/website/9b6a92af33b00bf2538bd02273dace9e06220dc2.pdf
-- https://www-cdn.anthropic.com/files/4zrzovbb/website/a6b3eb802a87e5516a302a9db3ebb357313f08e9.pdf
-
-## Preguntas de repaso
-
-- Cual es el objetivo practico de este curso?
-- Que conceptos o herramientas aparecen repetidamente?
-- Que decisiones humanas no deberian delegarse por completo a la IA?
-- Que evidencias o verificaciones exige el flujo de trabajo presentado?
-- Que skill de LinkedIn representa mejor esta certificacion?
+- AI Fluency = colaborar con la IA de forma **eficaz, ética y reflexiva**, no solo saber pulsar botones.
+- Las **4 Ds**: Delegation (qué), Description (cómo pedirlo), Discernment (juzgar el resultado), Diligence (hacerlo bien y ético).
+- Claude es un **LLM generativo**: potente pero **puede alucinar** → verificar siempre.
+- Familia de modelos: **Opus** (capacidad), **Sonnet** (equilibrio), **Haiku** (velocidad/coste).
+- **Ventana de contexto** = cuánto texto maneja el modelo a la vez.
+- **IA Constitucional** = método de Anthropic para alinear con principios de seguridad.
+- El **docente es el responsable final** (human-in-the-loop); la IA asiste, no decide sobre estudiantes.
+- **Privacidad**: no metas datos personales del alumnado sin resguardo legal.
+- **Integridad académica**: diseña tareas y políticas claras; distingue andamiaje de plagio.
+- **Sesgo y equidad**: revisa todo material generado por estereotipos, accesibilidad y representación.

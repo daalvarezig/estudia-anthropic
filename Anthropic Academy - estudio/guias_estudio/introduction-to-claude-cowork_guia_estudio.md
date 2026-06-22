@@ -1,225 +1,72 @@
-# Introduction to Claude Cowork
+## Resumen
 
-Fuente: https://anthropic.skilljar.com/introduction-to-claude-cowork
+**Claude Cowork** es la herramienta agéntica de escritorio de Anthropic pensada para el *trabajo del conocimiento*: en lugar de chatear, le das a Claude un objetivo y este planifica y ejecuta tareas de varios pasos directamente sobre tus archivos, carpetas y aplicaciones locales, devolviéndote un entregable terminado. La diferencia mental clave es **"resultado, no prompt"**: con Chat conversas; con Cowork abres una *sesión de trabajo* que orientas (steering) mientras Claude opera.
 
-## Para que sirve
+Está orientada a perfiles **no técnicos** (analistas, operaciones, legal, finanzas, investigación) que pasan el día con documentos y datos y prefieren dedicar el tiempo a las decisiones de criterio antes que al ensamblaje. Comparte la arquitectura de agente de **Claude Code**, pero con una interfaz de chat familiar y sin necesidad de escribir una línea de código.
 
-This certificate verifies that David Álvarez Iglesias completed Introduction to Claude Cowork
+La certificación oficial **"Introduction to Claude Cowork"** (Anthropic Academy, vía Skilljar) es gratuita, hands-on y se aprueba con un quiz final. El certificado incluye URL de verificación, se añade a LinkedIn y no caduca. El curso se estructura en cuatro bloques: *Meet Claude Cowork*, *Make Claude Cowork yours*, *Use Claude wherever you work* y *Sharing and safety in Claude Cowork*. Esta guía cubre exactamente esos cuatro ejes.
 
-## Cobertura del scrape
+## Conceptos clave
 
-- Lecciones visibles en pagina de curso: 0
-- Contenido extenso embebido: si
-- PDFs detectados: 0
-- Videos detectados en pagina principal: 8
-- Lecciones bloqueadas al abrir pagina individual: 0
+- **Cowork task loop (bucle de tarea):** el ciclo central. (1) Describes un objetivo en lenguaje natural; (2) Claude **planifica** y descompone la tarea en pasos; (3) **ejecuta** en un entorno controlado, mostrando el progreso; (4) **se detiene en "approval gates"** antes de acciones destructivas (borrados, sobrescrituras); (5) entrega un **resumen** final. Tú orientas (steering) en cualquier punto.
 
-## Secciones
+- **Trabajo sobre carpetas locales ("Work in a Folder"):** activas el acceso a una carpeta concreta y Claude puede leer, editar, mover, renombrar y (con permiso) borrar archivos. Esto contrasta con Chat, que solo acepta archivos subidos con límites de tamaño y cantidad.
 
-### Meet Claude Cowork
+- **Permisos y control humano:** al dar acceso a una carpeta eliges entre **acceso de una sola vez** o **"Always Allow"** (persistente). Las decisiones consecuentes quedan siempre en manos del usuario; Claude pide confirmación explícita antes de borrar o de pasos irreversibles.
 
-What Cowork is and how it differs from Chat, how to set it up, and your first end-to-end task: describe it, watch Claude plan and execute, and steer along the way.
+- **Contexto permanente (standing context):** lo que moldea el plan de Claude. Se apila por capas: **instrucciones globales / preferencias de perfil** (se cargan siempre), **Projects** (se añaden al abrir ese proyecto), y **Skills** (se activan solo cuando son relevantes). Buena práctica: instrucciones globales cortas; el detalle, en skills.
 
-### Make Claude Cowork yours
+- **Projects (Proyectos):** un espacio de trabajo persistente para *un cuerpo de trabajo*, con sus propios archivos, instrucciones y memoria afinados para tareas agénticas. Úsalo cuando Claude "pierde el hilo" de un trabajo recurrente.
 
-Give Claude standing context with global instructions and projects, then build skills and install plugins so Claude knows your vocabulary, your steps, and the outputs you expect.
+- **Skills (Habilidades):** carpetas con un fichero de instrucciones (p. ej. `SKILL.md`), scripts y recursos que Claude **carga dinámicamente** cuando una tarea encaja. Resuelven la *inconsistencia entre ejecuciones*: codifican cómo hacer una tarea repetible en tu contexto. Existen skills nativas de Office (docx, xlsx, pdf, pptx).
 
-### Use Claude wherever you work
+- **Plugins:** unidad instalable que **empaqueta** varias skills + conectores (MCP) + comandos + subagentes para una función de trabajo concreta. Es el formato para **distribuir y reutilizar** una configuración entre un equipo.
 
-Drive web apps with Claude in Chrome, and work inside Word, Excel, PowerPoint, and Outlook with the Claude add-ins for each.
+- **Connectors / MCP:** conexiones a apps y datos externos (Settings > Connectors). Permiten flujos híbridos: datos externos que alimentan archivos locales, o datos locales que disparan acciones externas. MCP (Model Context Protocol) es el estándar abierto que conecta a Claude con herramientas externas.
 
-### Sharing and safety in Claude Cowork
+- **Claude en Chrome:** integración de navegador para automatización web (navegar pestañas, clicar botones, rellenar formularios, capturar pantallas). Potente pero **lento**, porque cada interacción requiere capturas de pantalla; mejor para flujos puntuales que para volumen masivo.
 
-Work safely by reviewing plans and outputs, validate skills before you rely on them, and share plugins and workflows with your team.
+- **Microsoft 365 / Office:** Cowork trabaja en Word, Excel, PowerPoint y Outlook usando las skills de documento (generar borradores estructurados, extraer datos, montar informes).
 
-## Resumen de estudio
+- **Disponibilidad:** se accede desde la **app de escritorio de Claude** en planes de pago. La automatización de archivos locales y la app de escritorio son el corazón de Cowork.
 
-### Lesson 1: What is Claude Cowork
+## Que necesitas dominar para el certificado
 
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 8 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Define Claude Cowork and explain what makes it a different way of working with Claude
-- Understand Cowork as Claude working in your environment — on your files, in your apps, with your tools
-- Tell Chat, Cowork, and Code apart, and know which to reach for when
-- * * *
-- ### Introducing Cowork
-- This video introduces Claude Cowork and the type of work it's built to do. Notice how Cowork functions: not as a smarter chatbot, but as a different way of working with Claude entirely.
+1. **El task loop completo** y, sobre todo, dónde y por qué Claude **se detiene a pedir aprobación** (acciones destructivas). Esto cae casi seguro en el quiz.
+2. **La diferencia Chat vs Cowork vs Claude Code:** Chat = consejo conversacional (solo archivos subidos); Cowork = ejecución operativa sobre tu sistema para no-devs; Claude Code = automatización técnica en terminal para desarrolladores.
+3. **Cuándo usar Project, Skill, Plugin o Connector** (la pregunta de diseño más típica): cuerpo de trabajo persistente → Project; inconsistencia entre ejecuciones → Skill; actuar en otra app → Connector; reutilizar en equipo → Plugin.
+4. **Cómo funciona el contexto por capas** y por qué conviene que las instrucciones globales sean cortas (se cargan siempre y gastan contexto).
+5. **Modelo de permisos:** one-time vs Always Allow; el principio de que las decisiones consecuentes son del humano.
+6. **Integraciones:** qué hace Claude en Chrome y en Office 365, y sus límites (lentitud del navegador, parsing frágil de Excel con celdas combinadas / formato de presentación).
+7. **Sharing & safety:** validar una skill antes de confiar en ella, revisar lo que produce antes de compartirlo con el equipo, y empaquetar configuraciones probadas como plugins.
 
-### Lesson 2: Setting up Claude Cowork
+## Plan de estudio
 
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 8 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Open Cowork in the Claude Desktop app and point it at a working folder
-- Connect the apps where your work lives
-- Recognize what Claude asks before doing — and what it doesn't — so you can hand off work with confidence
-- * * *
-- ### Install Cowork
-- Cowork runs inside the Claude Desktop app on Mac and Windows. If you don't have it yet, install it from [claude.com/download](https://claude.com/download). Open the app, sign in, and find Cowork in the mode selector at the top right hand corner of the page. If Cowork isn't visible, you may need a paid plan or a more recent version of the desktop app.
+1. **Instala y abre** la app de escritorio de Claude y ejecuta **una tarea end-to-end real** sobre una carpeta de prueba (p. ej. ordenar una carpeta de descargas). Observa el bucle: plan → ejecución → approval gate → resumen.
+2. **Juega con los permisos:** concede acceso one-time, luego Always Allow, y fíjate en cuándo Claude pide confirmación para borrar.
+3. **Crea un Project** para un trabajo recurrente con instrucciones propias; comprueba cómo cambia el plan al darle contexto.
+4. **Crea o instala una Skill** (p. ej. usa las skills de Office) y observa que solo se activa cuando la tarea encaja. Después, **explora un plugin** para ver cómo agrupa skills + conectores.
+5. **Conecta Cowork a Chrome** y haz un flujo web sencillo; nota la latencia. Prueba generar un Word/Excel/PowerPoint desde archivos fuente.
+6. **Repasa el árbol de decisión** Project/Skill/Plugin/Connector hasta poder recitarlo.
+7. **Haz el quiz de práctica mentalmente** con cada concepto y luego el quiz oficial. Repasa especialmente seguridad y aprobaciones.
 
-### Lesson 3: What Claude Cowork can do for you
+## Errores comunes y tips
 
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 11 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Spot the three patterns of work that suit Cowork: multi-step, file-based, multi-tool
-- Set up a scheduled task with /schedule
-- Send Claude a task from your phone with Dispatch
-- * * *
-- ### What makes a task right for Claude Cowork
-- Not every task is a fit for Cowork, and you'll get more out of it when you can recognize the tasks that are. Three patterns cover most of the work Cowork is built for: tasks that take several steps, tasks that leverage context from real files, and tasks that span the tools you already use.
+- **Confundir Cowork con Chat:** Chat solo lee archivos *subidos*; Cowork actúa directamente sobre el sistema de archivos. No respondas "subes el archivo" en preguntas de Cowork.
+- **Creer que Claude borra sin avisar:** falso. Cowork **pide confirmación** antes de acciones destructivas; ese approval gate es un punto de examen.
+- **Mezclar Skill y Plugin:** una Skill es *una* instrucción reutilizable; un Plugin **empaqueta** varias skills + conectores + comandos para distribuir, normalmente a un equipo.
+- **Meter todo en instrucciones globales:** se cargan siempre y consumen contexto. Pon el conocimiento específico en skills, que se activan bajo demanda.
+- **Esperar que la automatización de Chrome sea rápida:** es lenta por las capturas de pantalla; no es la herramienta para 250 correos sin paciencia.
+- **Confiar a ciegas en el parsing de Excel:** la skill xlsx asume datos columnares limpios; con celdas combinadas o formato de presentación falla. Revisa siempre.
+- **Saltarse la validación antes de compartir:** valida la skill y revisa el output antes de hacerlo equipo. La seguridad es responsabilidad del que orienta.
 
-### Lesson 4: Hand Claude Cowork your first task
+## Puntos clave para recordar
 
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 15 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Walk a Cowork task end-to-end: through delegation, mid-task steering, and final review
-- Respond to Cowork's clarifying questions in a way that produces better output
-- Course-correct when Claude heads in the wrong direction
-- * * *
-- ### Watch one go end-to-end
-- This video walks through a single, real piece of work from delegation to deliverable: the prompt, the clarifying questions Claude asks, the moment the user reroutes mid-task, and the finished result at the end. Notice the rhythm — it's less like prompting a chatbot and more like briefing a smart colleague who's about to disappear into a task and come back with something done.
-
-### Lesson 5: Get better results faster
-
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 5 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Name the four building blocks that make Claude better at your work over time: global instructions, projects, skills, and plugins
-- * * *
-- ### How Cowork gets better at your work
-- In Lesson 4 you delegated one task and got a real deliverable back. What this module adds is the part that compounds: the more Claude knows about you, your work, and how your team does things, the better the next deliverable is — and the faster you get there.
-- Four building blocks make that happen. Each one gives Claude something it can carry forward, so the context you supply once keeps paying off.
-- ### The four building blocks
-
-### Lesson 6: Standing context: Global instructions and projects
-
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 7 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Set global instructions so Claude starts every session already knowing how you work
-- Decide when a piece of work belongs in a project
-- Choose between the three ways to start a project
-- * * *
-- ### Onboard your new collaborator
-- In Chat, memory builds itself — turn it on and Claude learns from your conversations automatically. Cowork works differently. The context that carries from task to task is mostly the context you set up: **global instructions**, which apply to every Cowork session, and **projects**, where Claude builds memory automatically from the conversations you have inside them. Most people start with global instructions and add projects as recurring work surfaces.
-
-### Lesson 7: Skills: Teach Claude Cowork your way
-
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 12 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Define a skill and explain how Claude uses one
-- Recognize the four building blocks a skill can include
-- Build a skill from one of your own recurring processes
-- * * *
-- ### What a skill actually is
-- A skill is a reusable playbook — a folder of files and resources — that teaches Claude how to do a specific kind of work the way you'd want it done. When you start a task that matches the skill, Claude loads the playbook and follows it.
-
-### Lesson 8: Plugins: Encode your team's expertise
-
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 12 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Define a plugin and what it bundles together
-- Recognize the two shapes plugins take
-- Install or customize a plugin against a real piece of your work
-- * * *
-- ### Watch what a plugin unlocks
-- The video shows what changes when a team's workflow stops being one person's playbook and becomes a shared toolkit anyone can install.
-
-### Lesson 9: Claude in Chrome
-
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 10 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Recognize the kinds of work Claude in Chrome unlocks
-- Use Chrome alongside Cowork on a real piece of work
-- * * *
-- ### Watch it work
-- The video shows how Claude can work in Chrome to read, click, and navigate websites alongside you.
-- #### Key takeaways
-
-### Lesson 10: Claude for Microsoft 365
-
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 5 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Recognize what Claude does inside Word, Excel, PowerPoint, and Outlook
-- Move work between the apps with one Claude conversation
-- Decide when to do the work in Cowork versus inside the document
-- * * *
-- ### Collaborate with Claude across Microsoft 365 apps
-- #### Key takeaways
-
-### Lesson 11: Best practices for working safely
-
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 8 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Set up your workspace so the important stuff stays protected
-- Write prompts that don't leave room for the wrong action
-- Recognize the moments when _"stop and think"_ matters more than speed
-- * * *
-- ### Your part in working safely with Cowork
-- You already know from Lesson 2 that Claude always asks before deleting, and — in the default permission mode — before sending or sharing too. That's the floor. This lesson is what _you_ bring on top — the pre-emptive moves that keep an autonomous tool with file, app, and connector access from doing something you didn't intend.
-
-### Lesson 12: Validating skills for plugins
-
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 8 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Explain what an eval is and why it matters before you share or rely on a skill
-- Run a lightweight eval through skill-creator
-- * * *
-- ### Why this matters
-- When you build a skill or bundle them into a plugin, you're essentially building a small product that other people will use. And like anything you'd hand to a colleague — a template, a spreadsheet model, a checklist — it's worth a test drive before it leaves your desk.
-- When you use a skill you built, you know how to work around any issues or failures. You know exactly what to ask it, what files to give it, and what the answer is supposed to look like. A teammate doesn't have any of that. They might phrase the request a little differently, hand it slightly different inputs, or hit an edge case — an unusual-but-real situation, like a request that's just outside what the skill was designed for. That's where skills tend to stumble, and the person using it won't know why.
-
-### Lesson 13: Share what you build with your team
-
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 7 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Explain how plugins get distributed across an Enterprise organization
-- Apply a few good habits for keeping a shared plugin healthy over time
-- * * *
-- ### Scaling workflows across your team
-- By this point, your team has a handful of skills that have earned their place. They started as someone's personal way of working, they've been run through evals, and they hold up on more than one person's use cases.
-- When you want to scale those across the whole team efficiently, you bundle them into a plugin — you covered how in Lesson 8. This lesson is about the next step: getting that plugin to everyone who needs it.
-
-### Lesson 14: Wrap up and next steps
-
-- /\* Slide figure — visual overview separation from prose \*/ figure.slide { background: #f7f6f1; padding: 20px; border-radius: 10px; margin: 24px 0; } figure.slide figcaption { font-size: 11px; color: #9c9a92; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; } figure.slide img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin: 0; } /\* Links — Skilljar styles   as pills with gray bg; reset to inline underline \*/ a { display: inline; background: none; padding: 0; border: none; border-radius: 0; text-decoration: underline; font-family: inherit; font-size: inherit; } /\* Blockquotes — example prompts (Claude 101 doesn't use these) \*/ blockquote { background: #f5f4ed; border-left: 3px solid #d1cfc5; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; color: #3d3d3a; } blockquote pre { font-family: ui-monospace, monospace; font-size: 14px; }
-- **Estimated time:** 5 minutes
-- ### Learning objectives
-- By the end of this lesson you'll be able to:
-- Recall the arc of Cowork 101 and what each module gave you
-- Pick the next moves that keep you using Cowork after the course ends
-- * * *
-- ### What you've covered
-- What you've covered
-- Module 1
-
-## Preguntas de repaso
-
-- Cual es el objetivo practico de este curso?
-- Que conceptos o herramientas aparecen repetidamente?
-- Que decisiones humanas no deberian delegarse por completo a la IA?
-- Que evidencias o verificaciones exige el flujo de trabajo presentado?
-- Que skill de LinkedIn representa mejor esta certificacion?
+- Cowork = **objetivo, no prompt**; Claude planifica y ejecuta sobre tus archivos y apps, y tú orientas.
+- El **task loop**: describir → planificar → ejecutar → **aprobar acciones destructivas** → resumen.
+- Permisos: **one-time** o **Always Allow**; las decisiones consecuentes son siempre del humano.
+- **Project** = cuerpo de trabajo persistente; **Skill** = instrucción reutilizable que se activa sola; **Plugin** = paquete de skills+conectores para reutilizar/compartir; **Connector/MCP** = puente a apps externas.
+- El **contexto se apila** (globales + project + skills); mantén las instrucciones globales cortas.
+- Integra con **Chrome** (automatización web, lenta) y **Microsoft 365** (Word, Excel, PowerPoint, Outlook) vía skills de documento.
+- Comparte la **arquitectura de Claude Code** pero para no-devs, con UI de chat; disponible en la **app de escritorio** en planes de pago.
+- **Sharing & safety:** valida skills, revisa outputs y empaqueta lo probado antes de llevarlo al equipo.

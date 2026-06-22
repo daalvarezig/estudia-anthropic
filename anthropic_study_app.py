@@ -27,6 +27,23 @@ def load_courses():
     return json.loads(COURSES_JSON.read_text(encoding="utf-8"))
 
 
+CONTENT_JSON = DATA_DIR / "course_content.json"
+_CONTENT_CACHE = None
+
+
+def _content_all():
+    global _CONTENT_CACHE
+    if _CONTENT_CACHE is None:
+        _CONTENT_CACHE = json.loads(CONTENT_JSON.read_text(encoding="utf-8")) if CONTENT_JSON.exists() else {}
+    return _CONTENT_CACHE
+
+
+def content_for(course):
+    gf = course.get("guideFile", "")
+    key = gf.split("/")[-1].replace("_guia_estudio.md", "") if gf else ""
+    return _content_all().get(key)
+
+
 def clean_text(text: str) -> str:
     return (
         text.replace("â†’", "->")
@@ -427,7 +444,7 @@ st.sidebar.markdown("## Estudia")
 st.sidebar.caption("Anthropic Academy")
 mode = st.sidebar.radio(
     "Vista",
-    ["Dashboard", "Curso", "Flashcards", "Test", "Ruta de estudio", "Contenido scrapeado"],
+    ["Dashboard", "Curso", "Flashcards", "Test", "Ruta de estudio"],
     label_visibility="collapsed",
 )
 
@@ -446,12 +463,10 @@ st.sidebar.caption("Todo el contenido didáctico de la app está en castellano. 
 
 
 total_courses = len(courses)
-full_count = sum(1 for c in courses if c.get("llmContentFile"))
-lesson_count = sum(len(c.get("lessons", [])) for c in courses)
-blocked_count = sum(
-    sum(1 for l in c.get("lessonContents", []) if l.get("status") == "blocked")
-    for c in courses
-)
+guide_count = sum(1 for c in courses if guide_path_for(c))
+_ca = _content_all()
+flash_total = sum(len(v.get("flashcards", [])) for v in _ca.values())
+quiz_total = sum(len(v.get("quiz", [])) for v in _ca.values())
 
 
 if mode == "Dashboard":
@@ -468,9 +483,9 @@ if mode == "Dashboard":
         f"""
 <div class="dashgrid">
   <div class="metric-card"><div class="metric-k">Cursos</div><div class="metric-v">{total_courses}</div></div>
-  <div class="metric-card"><div class="metric-k">Con contenido extenso</div><div class="metric-v">{full_count}</div></div>
-  <div class="metric-card"><div class="metric-k">Lecciones visibles</div><div class="metric-v">{lesson_count}</div></div>
-  <div class="metric-card"><div class="metric-k">Lecciones bloqueadas</div><div class="metric-v">{blocked_count}</div></div>
+  <div class="metric-card"><div class="metric-k">Certificaciones</div><div class="metric-v">{total_courses}</div></div>
+  <div class="metric-card"><div class="metric-k">Guías de estudio</div><div class="metric-v">{guide_count}</div></div>
+  <div class="metric-card"><div class="metric-k">Preguntas de repaso</div><div class="metric-v">{flash_total + quiz_total}</div></div>
 </div>
 """,
         unsafe_allow_html=True,
@@ -580,10 +595,14 @@ elif mode == "Flashcards":
     prof = selected_profile
     st.markdown(f"<div class='app-title'>Flashcards: {display_title(selected)}</div>", unsafe_allow_html=True)
     st.markdown("<div class='subtle'>Tarjetas rápidas para memorizar conceptos. Cambia de tarjeta desde el control inferior.</div>", unsafe_allow_html=True)
-    cards = list(prof["cards"])
-    guide = guide_path_for(selected)
-    for heading in extract_headings_from_guide(guide, limit=6):
-        cards.append((heading, "Idea detectada en la guía. Ábrela en la vista Curso para leer el contexto completo."))
+    _cf = content_for(selected)
+    if _cf and _cf.get("flashcards"):
+        cards = [(c.get("q", ""), c.get("a", "")) for c in _cf["flashcards"]]
+    else:
+        cards = list(prof["cards"])
+        guide = guide_path_for(selected)
+        for heading in extract_headings_from_guide(guide, limit=6):
+            cards.append((heading, "Idea detectada en la guía. Ábrela en la vista Curso para leer el contexto completo."))
     idx = st.slider("Tarjeta", 1, max(1, len(cards)), 1) - 1
     title, body = cards[idx]
     st.markdown(
@@ -606,7 +625,11 @@ elif mode == "Flashcards":
 
 elif mode == "Test":
     prof = selected_profile
-    questions = make_questions(selected, prof)
+    _cq = content_for(selected)
+    if _cq and _cq.get("quiz"):
+        questions = [(q.get("q", ""), q.get("options", []), q.get("answer", 0) if 0 <= q.get("answer", 0) < len(q.get("options", [])) else 0) for q in _cq["quiz"] if q.get("options")]
+    else:
+        questions = make_questions(selected, prof)
     st.markdown(f"<div class='app-title'>Test: {display_title(selected)}</div>", unsafe_allow_html=True)
     st.markdown("<div class='subtle'>Batería corta para repasar conceptos clave. Las preguntas y explicaciones están en castellano.</div>", unsafe_allow_html=True)
     quiz_len = st.segmented_control("Modo", ["Rápido", "Simulacro"], default="Rápido")
