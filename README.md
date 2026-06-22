@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/topyverse-labs.png" alt="TopyVerse Labs" width="360">
+</p>
+
 # 🎓 Estudia Anthropic
 
 Herramienta de estudio (Streamlit) para preparar las **certificaciones de Anthropic Academy**: 19 cursos con guía propia, flashcards, tests y el enlace oficial de cada certificación.
